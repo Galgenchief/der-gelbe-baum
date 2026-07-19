@@ -93,6 +93,10 @@
   .product-row input { flex: 1; }
   .product-row button { border: none; background: #eee; border-radius: 6px; cursor: pointer; padding: 0 10px; }
 
+  .subcat-checks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .subcat-chip { border: 1px solid var(--border); border-radius: 999px; padding: 5px 10px; font-size: 12px; cursor: pointer; background: white; user-select: none; }
+  .subcat-chip.active { background: var(--yellow); border-color: var(--yellow-dark); }
+
   .hours-row { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 13px; }
   .hours-row .h_daylabel { width: 26px; }
   .hours-row input[type=time] { padding: 4px; border: 1px solid var(--border); border-radius: 6px; width: 100px; }
@@ -175,8 +179,8 @@
     <select id="f_category"></select>
 
     <div id="subcatField" style="display:none;">
-      <label>Art</label>
-      <select id="f_subcategory"></select>
+      <label>Art (Mehrfachauswahl möglich)</label>
+      <div id="f_subcategory" class="subcat-checks"></div>
       <div class="hint" id="mushroomHint" style="display:none;">⚠️ Nur zur groben Einordnung – vor dem Verzehr immer sicher bestimmen lassen (z. B. durch einen Pilzsachverständigen).</div>
     </div>
 
@@ -506,15 +510,27 @@ Object.entries(CATS).forEach(([key, cat]) => {
   catSelect.appendChild(opt);
 });
 
-function updateSubcatOptions(preselect = '') {
+function updateSubcatOptions(preselect = []) {
   const subs = SUBCATS[catSelect.value];
   const subField = document.getElementById('subcatField');
-  const subSelect = document.getElementById('f_subcategory');
+  const subContainer = document.getElementById('f_subcategory');
   document.getElementById('mushroomHint').style.display = catSelect.value === 'mushroom' ? 'block' : 'none';
-  if (!subs) { subField.style.display = 'none'; subSelect.innerHTML = ''; return; }
+  if (!subs) { subField.style.display = 'none'; subContainer.innerHTML = ''; return; }
   subField.style.display = 'block';
-  subSelect.innerHTML = subs.map(([id, label]) => `<option value="${id}">${label}</option>`).join('');
-  if (preselect) subSelect.value = preselect;
+  subContainer.innerHTML = subs.map(([id, label]) => `<div class="subcat-chip${preselect.includes(id) ? ' active' : ''}" data-id="${id}">${label}</div>`).join('');
+  subContainer.querySelectorAll('.subcat-chip').forEach(chip => {
+    chip.onclick = () => chip.classList.toggle('active');
+  });
+}
+
+function collectSubcategories() {
+  return [...document.querySelectorAll('#f_subcategory .subcat-chip.active')].map(chip => chip.dataset.id);
+}
+
+function parseSubcats(raw) {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  try { const parsed = JSON.parse(raw); return Array.isArray(parsed) ? parsed : []; } catch { return []; }
 }
 
 const HOURS_CATEGORIES = ['farmshop', 'market'];
@@ -684,11 +700,11 @@ function popupHtml(p) {
   </div>`;
 }
 
-function subLabel(category, subcategory) {
+function subLabel(category, subcategoryRaw) {
   const subs = SUBCATS[category];
-  if (!subs || !subcategory) return '';
-  const found = subs.find(([id]) => id === subcategory);
-  return found ? found[1] : '';
+  const ids = parseSubcats(subcategoryRaw);
+  if (!subs || !ids.length) return '';
+  return ids.map(id => (subs.find(([sid]) => sid === id) || [])[1]).filter(Boolean).join(', ');
 }
 
 function escapeHtml(str) {
@@ -799,7 +815,7 @@ function openForm(place, latlng) {
   if (place) {
     document.getElementById('f_name').value = place.name;
     document.getElementById('f_category').value = place.category;
-    updateSubcatOptions(place.subcategory || '');
+    updateSubcatOptions(parseSubcats(place.subcategory));
     updateHoursVisibility();
     document.getElementById('f_access').value = place.access;
     document.getElementById('f_description').value = place.description || '';
@@ -880,7 +896,7 @@ document.getElementById('formSave').onclick = async () => {
   const payload = {
     name,
     category: document.getElementById('f_category').value,
-    subcategory: SUBCATS[document.getElementById('f_category').value] ? document.getElementById('f_subcategory').value : '',
+    subcategory: JSON.stringify(SUBCATS[document.getElementById('f_category').value] ? collectSubcategories() : []),
     access: document.getElementById('f_access').value,
     description: document.getElementById('f_description').value.trim(),
     season: document.getElementById('f_season').value.trim(),
@@ -1101,7 +1117,8 @@ function findNearestForIngredient(ingredientId) {
   const origin = recipeOrigin();
   let best = null;
   places.forEach(p => {
-    const matches = ing.sources.some(s => p.category === s.category && (!s.subcategory || p.subcategory === s.subcategory));
+    const placeSubs = parseSubcats(p.subcategory);
+    const matches = ing.sources.some(s => p.category === s.category && (!s.subcategory || placeSubs.includes(s.subcategory)));
     if (!matches) return;
     const d = distanceKm(origin, p);
     if (!best || d < best.distance) best = { place: p, distance: d };

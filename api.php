@@ -23,9 +23,12 @@ const SUBCATEGORIES = [
     'homerestaurant' => ['international', 'italian', 'asian', 'german', 'vegetarian', 'other'],
 ];
 
-function validSubcategory(string $category, string $subcategory): string {
-    if ($subcategory === '' || !isset(SUBCATEGORIES[$category])) return '';
-    return in_array($subcategory, SUBCATEGORIES[$category], true) ? $subcategory : '';
+function validSubcategories(string $category, string $json): string {
+    if (!isset(SUBCATEGORIES[$category])) return '[]';
+    $decoded = json_decode($json, true);
+    if (!is_array($decoded)) return '[]';
+    $valid = array_values(array_intersect($decoded, SUBCATEGORIES[$category]));
+    return json_encode($valid);
 }
 
 function validHours(string $json): string {
@@ -121,7 +124,7 @@ switch ($action) {
         }
 
         $token = ownerToken();
-        $subcategory = validSubcategory($category, (string)($in['subcategory'] ?? ''));
+        $subcategory = validSubcategories($category, (string)($in['subcategory'] ?? ''));
         $hours = validHours((string)($in['hours'] ?? ''));
 
         $stmt = db()->prepare('
@@ -183,7 +186,7 @@ switch ($action) {
         if ($orderable && trim((string)($in['contact_email'] ?? '')) === '') {
             fail('Für Bestellfunktion wird eine Kontakt-E-Mail benötigt');
         }
-        $subcategory = validSubcategory($category, (string)($in['subcategory'] ?? ''));
+        $subcategory = validSubcategories($category, (string)($in['subcategory'] ?? ''));
         $hours = validHours((string)($in['hours'] ?? ''));
 
         $stmt = db()->prepare('
