@@ -406,7 +406,7 @@ function updateHoursVisibility() {
 }
 
 function updateContactEmailVisibility() {
-  const show = catSelect.value === 'farmshop' || document.getElementById('f_orderable').checked;
+  const show = document.getElementById('f_access').value === 'private' || document.getElementById('f_orderable').checked;
   document.getElementById('contactEmailField').style.display = show ? 'block' : 'none';
 }
 
@@ -416,6 +416,7 @@ function onCategoryChange() {
   updateContactEmailVisibility();
 }
 catSelect.onchange = onCategoryChange;
+document.getElementById('f_access').onchange = updateContactEmailVisibility;
 
 // -- Öffnungszeiten-Raster --
 const hoursGridEl = document.getElementById('hoursGrid');
