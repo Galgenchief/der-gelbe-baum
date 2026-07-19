@@ -333,6 +333,8 @@ const CATS = {
   flowerfield:    { label: 'Blumenfeld',                    icon: '🌻', color: '#e6b800' },
   eggs:           { label: 'Eier',                          icon: '🥚', color: '#d9a441' },
   honey:          { label: 'Honig',                         icon: '🍯', color: '#d99a00' },
+  fish:           { label: 'Fisch',                         icon: '🐟', color: '#3d7ea6' },
+  meat:           { label: 'Fleisch',                       icon: '🥩', color: '#a13d3d' },
   farmshop:       { label: 'Hofladen',                      icon: '🏚️', color: '#9c6b30' },
   market:         { label: 'Marktstand (regelmäßig)',       icon: '🧺', color: '#2a9d8f' },
   homerestaurant: { label: 'Home Restaurant',                icon: '🍽️', color: '#c1443c' },
@@ -383,6 +385,12 @@ const SUBCATS = {
   honey: [
     ['blossom', 'Blütenhonig'], ['forest', 'Waldhonig'], ['acacia', 'Akazienhonig'], ['linden', 'Lindenhonig'], ['other', 'Sonstiger Honig'],
   ],
+  fish: [
+    ['trout', 'Forelle'], ['carp', 'Karpfen'], ['smoked', 'Räucherfisch'], ['other', 'Sonstiger Fisch'],
+  ],
+  meat: [
+    ['beef', 'Rind'], ['pork', 'Schwein'], ['lamb', 'Lamm'], ['game', 'Wild'], ['poultry', 'Geflügel'], ['other', 'Sonstiges'],
+  ],
   homerestaurant: [
     ['international', 'International'], ['italian', 'Italienisch'], ['asian', 'Asiatisch'],
     ['german', 'Deutsch/Regional'], ['vegetarian', 'Vegetarisch/Vegan'], ['other', 'Sonstige Küche'],
@@ -419,6 +427,7 @@ const INGREDIENTS = {
   potatoes: { label: 'Kartoffeln', sources: [src('farmshop', 'vegetables'), src('market', 'vegetables')] },
   mushrooms: { label: 'Pilze', sources: [src('mushroom')] },
   meat: { label: 'Wurst & Fleisch', sources: [
+    src('meat'),
     src('farmshop', 'meat'), src('farmshop', 'beef'), src('farmshop', 'pork'), src('farmshop', 'lamb'), src('farmshop', 'game'), src('farmshop', 'poultry'),
     src('market', 'meat'),
   ] },
