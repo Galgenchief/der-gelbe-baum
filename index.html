@@ -1301,17 +1301,17 @@ function openRecipeRoute(matches) {
 
   if (!stops.length) { alert('Keine Zutaten ausgewählt, die in der Nähe verfügbar sind.'); return; }
 
-  const origin = recipeOrigin();
-  const originStr = `${origin.lat},${origin.lng}`;
+  // Kein "origin" mitgeben: Google Maps startet dann automatisch am aktuellen
+  // Standort des Geräts, egal wo die Karte hier gerade zentriert ist.
   const destination = stops[stops.length - 1];
   const waypointStops = stops.slice(0, -1).map(p => `${p.lat},${p.lng}`);
 
-  let url = `https://www.google.com/maps/dir/?api=1&origin=${originStr}&destination=${destination.lat},${destination.lng}`;
+  let url = `https://www.google.com/maps/dir/?api=1&destination=${destination.lat},${destination.lng}`;
   if (waypointStops.length) {
-    // optimize:true lässt Google Maps die Reihenfolge der Stopps für die schnellste Route berechnen
+    // optimize:true lässt Google Maps die Reihenfolge der Stopps für die beste Route berechnen
     url += `&waypoints=${encodeURIComponent('optimize:true|' + waypointStops.join('|'))}`;
   }
-  window.location.href = url;
+  window.open(url, '_blank');
 }
 
 // -- Funktionswunsch --
