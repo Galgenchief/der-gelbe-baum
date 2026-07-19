@@ -98,6 +98,14 @@
   .hours-row input[type=time] { padding: 4px; border: 1px solid var(--border); border-radius: 6px; width: 100px; }
   .hours-row.disabled { opacity: 0.4; }
 
+  .recipe-row { border-top: 1px solid #eee; padding: 10px 0; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+  .recipe-row:hover { background: #faf7ee; }
+  .recipe-row .rname { font-weight: 600; font-size: 14px; }
+  .ingredient-row { display: flex; align-items: center; gap: 8px; border-top: 1px solid #eee; padding: 8px 0; font-size: 13px; }
+  .ingredient-row .istatus { flex: 1; }
+  .ingredient-row .imissing { color: #a0522d; }
+  .ingredient-row .ifound { color: #2f6b34; }
+
   #detailPhoto { width: 100%; border-radius: 8px; margin-top: 10px; max-height: 220px; object-fit: cover; }
   .stars { font-size: 20px; cursor: pointer; letter-spacing: 2px; }
   .comment { border-top: 1px solid #eee; padding: 8px 0; font-size: 13px; }
@@ -133,6 +141,7 @@
   <h1>🌳 Der Gelbe Baum</h1>
   <div style="display:flex; gap:8px; align-items:center;">
     <button id="toggleSidebarBtn" class="primary" style="display:none; background:white;">☰ Liste</button>
+    <button id="recipeBtn" class="primary" style="background:white;">🍳 Rezept-Planer</button>
     <button id="addBtn" class="primary">＋ Bodenschatz melden</button>
   </div>
 </header>
@@ -244,6 +253,11 @@
   </div>
 </div>
 
+<!-- Rezept-Planer -->
+<div class="modal-overlay" id="recipeModal">
+  <div class="modal" id="recipeContent" style="max-width:560px;"></div>
+</div>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const API = 'api.php';
@@ -313,6 +327,110 @@ const SUBCATS = {
 };
 
 const WEEKDAYS = [['mo','Mo'],['tu','Di'],['we','Mi'],['th','Do'],['fr','Fr'],['sa','Sa'],['su','So']];
+
+// -- Rezept-Planer: Zutaten-Herkunft --
+// sources: [] = im Umkreis nicht erhältlich, muss im Supermarkt gekauft werden
+function src(category, subcategory) { return subcategory ? { category, subcategory } : { category }; }
+
+const INGREDIENTS = {
+  apple: { label: 'Äpfel', sources: [src('fruittrees', 'apple')] },
+  pear: { label: 'Birnen', sources: [src('fruittrees', 'pear')] },
+  cherry: { label: 'Kirschen', sources: [src('fruittrees', 'cherry')] },
+  plum: { label: 'Zwetschgen/Pflaumen', sources: [src('fruittrees', 'plum')] },
+  quince: { label: 'Quitten', sources: [src('fruittrees', 'quince')] },
+  raspberry: { label: 'Himbeeren', sources: [src('berries', 'raspberry')] },
+  currant: { label: 'Johannisbeeren', sources: [src('berries', 'currant')] },
+  gooseberry: { label: 'Stachelbeeren', sources: [src('berries', 'gooseberry')] },
+  walnut: { label: 'Walnüsse', sources: [src('nuts', 'walnut')] },
+  hazelnut: { label: 'Haselnüsse', sources: [src('nuts', 'hazelnut')] },
+  wildgarlic: { label: 'Bärlauch', sources: [src('herbs', 'wildgarlic')] },
+  herbs_general: { label: 'Frische Kräuter', sources: [src('herbs')] },
+  eggs: { label: 'Eier', sources: [src('eggs'), src('farmshop', 'eggs'), src('market', 'eggs')] },
+  milk: { label: 'Milch', sources: [src('farmshop', 'milk'), src('market', 'dairy')] },
+  cream: { label: 'Sahne', sources: [src('farmshop', 'cream')] },
+  butter: { label: 'Butter', sources: [src('farmshop', 'butter')] },
+  quark: { label: 'Quark', sources: [src('farmshop', 'quark')] },
+  cheese: { label: 'Käse', sources: [src('farmshop', 'cheese'), src('market', 'cheese')] },
+  honey: { label: 'Honig', sources: [src('honey'), src('farmshop', 'honey'), src('market', 'honey')] },
+  vegetables: { label: 'Gemüse', sources: [src('farmshop', 'vegetables'), src('market', 'vegetables')] },
+  potatoes: { label: 'Kartoffeln', sources: [src('farmshop', 'vegetables'), src('market', 'vegetables')] },
+  mushrooms: { label: 'Pilze', sources: [src('mushroom')] },
+  meat: { label: 'Wurst & Fleisch', sources: [src('farmshop', 'meat'), src('market', 'meat')] },
+  fruit_general: { label: 'Obst', sources: [src('market', 'fruit')] },
+  jam: { label: 'Marmelade', sources: [src('farmshop', 'jam'), src('market', 'jam')] },
+  // Zutaten ohne Quelle in der App – zählen immer als "Supermarkt"
+  flour: { label: 'Mehl', sources: [] },
+  sugar: { label: 'Zucker', sources: [] },
+  bakingpowder: { label: 'Backpulver', sources: [] },
+  vanillasugar: { label: 'Vanillezucker', sources: [] },
+  chocolate: { label: 'Schokolade/Kakao', sources: [] },
+  cinnamon: { label: 'Zimt', sources: [] },
+  gelatin: { label: 'Gelatine', sources: [] },
+  vinegar: { label: 'Essig', sources: [] },
+  mustard: { label: 'Senf', sources: [] },
+  breadcrumbs: { label: 'Semmelbrösel', sources: [] },
+  pasta: { label: 'Nudeln', sources: [] },
+  oil: { label: 'Öl', sources: [] },
+  onion: { label: 'Zwiebeln', sources: [] },
+  garlic: { label: 'Knoblauch', sources: [] },
+  lemon: { label: 'Zitrone', sources: [] },
+  almonds: { label: 'Mandeln', sources: [] },
+  raisins: { label: 'Rosinen', sources: [] },
+  gherkin: { label: 'Gewürzgurken', sources: [] },
+  paprika: { label: 'Paprikapulver', sources: [] },
+  curry: { label: 'Currypulver', sources: [] },
+  ketchup: { label: 'Ketchup', sources: [] },
+  lentils: { label: 'Linsen', sources: [] },
+  rhubarb: { label: 'Rhabarber', sources: [] },
+  pumpkin: { label: 'Kürbis', sources: [] },
+  greenbeans: { label: 'Grüne Bohnen', sources: [] },
+  peas: { label: 'Erbsen', sources: [] },
+};
+
+const RECIPES = [
+  // -- Süß / Kuchen --
+  { id: 'apfelkuchen', name: 'Apfelkuchen', type: 'sweet', ingredients: ['apple', 'flour', 'sugar', 'eggs', 'butter', 'bakingpowder', 'cinnamon'] },
+  { id: 'kaesekuchen', name: 'Käsekuchen', type: 'sweet', ingredients: ['quark', 'eggs', 'sugar', 'butter', 'flour', 'vanillasugar'] },
+  { id: 'streuselkuchen', name: 'Streuselkuchen', type: 'sweet', ingredients: ['flour', 'sugar', 'butter', 'eggs', 'milk', 'apple'] },
+  { id: 'marmorkuchen', name: 'Marmorkuchen', type: 'sweet', ingredients: ['flour', 'sugar', 'eggs', 'butter', 'chocolate', 'bakingpowder'] },
+  { id: 'zitronenkuchen', name: 'Zitronenkuchen', type: 'sweet', ingredients: ['flour', 'sugar', 'eggs', 'butter', 'lemon', 'bakingpowder'] },
+  { id: 'bienenstich', name: 'Bienenstich', type: 'sweet', ingredients: ['flour', 'sugar', 'eggs', 'butter', 'honey', 'almonds', 'cream', 'vanillasugar'] },
+  { id: 'zwetschgendatschi', name: 'Zwetschgendatschi', type: 'sweet', ingredients: ['plum', 'flour', 'sugar', 'butter', 'eggs', 'bakingpowder'] },
+  { id: 'donauwelle', name: 'Donauwelle', type: 'sweet', ingredients: ['flour', 'sugar', 'eggs', 'butter', 'chocolate', 'cherry', 'cream'] },
+  { id: 'frankfurterkranz', name: 'Frankfurter Kranz', type: 'sweet', ingredients: ['flour', 'sugar', 'eggs', 'butter', 'hazelnut', 'jam'] },
+  { id: 'sachertorte', name: 'Sachertorte', type: 'sweet', ingredients: ['flour', 'sugar', 'eggs', 'butter', 'chocolate', 'jam'] },
+  { id: 'schwarzwaelder', name: 'Schwarzwälder Kirschtorte', type: 'sweet', ingredients: ['flour', 'sugar', 'eggs', 'butter', 'cherry', 'cream', 'chocolate'] },
+  { id: 'nusskuchen', name: 'Nusskuchen', type: 'sweet', ingredients: ['flour', 'sugar', 'eggs', 'butter', 'walnut', 'bakingpowder'] },
+  { id: 'moehrenkuchen', name: 'Möhrenkuchen', type: 'sweet', ingredients: ['flour', 'sugar', 'eggs', 'oil', 'walnut', 'bakingpowder', 'cinnamon'] },
+  { id: 'kirschkuchen', name: 'Kirschkuchen', type: 'sweet', ingredients: ['cherry', 'flour', 'sugar', 'eggs', 'butter', 'bakingpowder'] },
+  { id: 'pflaumenkuchen', name: 'Pflaumenkuchen', type: 'sweet', ingredients: ['plum', 'flour', 'sugar', 'butter', 'eggs', 'cinnamon'] },
+  { id: 'stachelbeerkuchen', name: 'Stachelbeerkuchen', type: 'sweet', ingredients: ['gooseberry', 'flour', 'sugar', 'eggs', 'butter', 'bakingpowder'] },
+  { id: 'rhabarberkuchen', name: 'Rhabarberkuchen', type: 'sweet', ingredients: ['rhubarb', 'flour', 'sugar', 'eggs', 'butter', 'vanillasugar'] },
+  { id: 'johannisbeerkuchen', name: 'Johannisbeerkuchen', type: 'sweet', ingredients: ['currant', 'flour', 'sugar', 'eggs', 'butter', 'bakingpowder'] },
+  { id: 'baumkuchen', name: 'Baumkuchen', type: 'sweet', ingredients: ['eggs', 'sugar', 'butter', 'flour', 'vanillasugar', 'jam'] },
+  { id: 'himbeertorte', name: 'Himbeertorte', type: 'sweet', ingredients: ['raspberry', 'flour', 'sugar', 'eggs', 'butter', 'cream', 'gelatin'] },
+  // -- Herzhaft --
+  { id: 'schnitzel', name: 'Schnitzel mit Kartoffelsalat', type: 'savory', ingredients: ['meat', 'potatoes', 'eggs', 'breadcrumbs', 'flour', 'onion'] },
+  { id: 'rouladen', name: 'Rouladen', type: 'savory', ingredients: ['meat', 'onion', 'gherkin', 'mustard', 'vegetables'] },
+  { id: 'gulasch', name: 'Gulasch', type: 'savory', ingredients: ['meat', 'onion', 'vegetables', 'paprika', 'potatoes'] },
+  { id: 'currywurst', name: 'Currywurst', type: 'savory', ingredients: ['meat', 'curry', 'ketchup'] },
+  { id: 'kartoffelsalat', name: 'Kartoffelsalat', type: 'savory', ingredients: ['potatoes', 'onion', 'vinegar', 'oil', 'eggs'] },
+  { id: 'sauerbraten', name: 'Sauerbraten', type: 'savory', ingredients: ['meat', 'onion', 'vegetables', 'vinegar', 'raisins'] },
+  { id: 'kaesespaetzle', name: 'Käsespätzle', type: 'savory', ingredients: ['pasta', 'cheese', 'onion'] },
+  { id: 'kartoffelsuppe', name: 'Kartoffelsuppe', type: 'savory', ingredients: ['potatoes', 'vegetables', 'meat', 'cream'] },
+  { id: 'linsensuppe', name: 'Linsensuppe', type: 'savory', ingredients: ['lentils', 'potatoes', 'vegetables', 'meat'] },
+  { id: 'frikadellen', name: 'Frikadellen', type: 'savory', ingredients: ['meat', 'onion', 'eggs', 'breadcrumbs'] },
+  { id: 'kartoffelpuffer', name: 'Kartoffelpuffer', type: 'savory', ingredients: ['potatoes', 'onion', 'eggs', 'flour'] },
+  { id: 'bratkartoffeln', name: 'Bratkartoffeln', type: 'savory', ingredients: ['potatoes', 'onion', 'meat'] },
+  { id: 'gemueseeintopf', name: 'Gemüseeintopf', type: 'savory', ingredients: ['vegetables', 'potatoes', 'meat'] },
+  { id: 'flammkuchen', name: 'Flammkuchen', type: 'savory', ingredients: ['flour', 'cream', 'onion', 'meat'] },
+  { id: 'kuerbissuppe', name: 'Kürbissuppe', type: 'savory', ingredients: ['pumpkin', 'vegetables', 'cream', 'onion'] },
+  { id: 'bohnensuppe', name: 'Grüne Bohnensuppe', type: 'savory', ingredients: ['greenbeans', 'potatoes', 'meat'] },
+  { id: 'erbsensuppe', name: 'Erbsensuppe', type: 'savory', ingredients: ['peas', 'potatoes', 'meat'] },
+  { id: 'pilzpfanne', name: 'Pilzpfanne', type: 'savory', ingredients: ['mushrooms', 'onion', 'cream', 'butter'] },
+  { id: 'kraeuterquark', name: 'Kräuterquark mit Kartoffeln', type: 'savory', ingredients: ['quark', 'herbs_general', 'potatoes'] },
+  { id: 'baerlauchpesto', name: 'Bärlauch-Pesto-Nudeln', type: 'savory', ingredients: ['wildgarlic', 'pasta', 'cheese', 'walnut', 'oil'] },
+];
 
 // -- State --
 let places = [];
@@ -966,6 +1084,148 @@ document.getElementById('orderSend').onclick = async () => {
   orderModal.classList.remove('open');
   alert('Bestellanfrage gesendet! Der Anbieter meldet sich bei dir.');
 };
+
+// -- Rezept-Planer --
+let recipeTolerance = 2;
+let recipeTypeFilter = new Set(['sweet', 'savory']);
+let activeRecipe = null;
+let recipeSelectedIngredients = new Set();
+
+function recipeOrigin() {
+  return userLatLng || { lat: map.getCenter().lat, lng: map.getCenter().lng };
+}
+
+function findNearestForIngredient(ingredientId) {
+  const ing = INGREDIENTS[ingredientId];
+  if (!ing || !ing.sources.length) return null;
+  const origin = recipeOrigin();
+  let best = null;
+  places.forEach(p => {
+    const matches = ing.sources.some(s => p.category === s.category && (!s.subcategory || p.subcategory === s.subcategory));
+    if (!matches) return;
+    const d = distanceKm(origin, p);
+    if (!best || d < best.distance) best = { place: p, distance: d };
+  });
+  return best;
+}
+
+function recipeMissingCount(recipe) {
+  return recipe.ingredients.filter(id => !findNearestForIngredient(id)).length;
+}
+
+const recipeModal = document.getElementById('recipeModal');
+
+function openRecipePlanner() {
+  renderRecipeList();
+  recipeModal.classList.add('open');
+}
+document.getElementById('recipeBtn').onclick = openRecipePlanner;
+
+function renderRecipeList() {
+  const rows = RECIPES
+    .filter(r => recipeTypeFilter.has(r.type))
+    .map(r => ({ r, missing: recipeMissingCount(r) }))
+    .filter(x => x.missing <= recipeTolerance)
+    .sort((a, b) => a.missing - b.missing || a.r.name.localeCompare(b.r.name));
+
+  document.getElementById('recipeContent').innerHTML = `
+    <h2>🍳 Rezept-Planer</h2>
+    <p class="hint">Zeigt Rezepte, bei denen du die meisten Zutaten in der Nähe bekommst – der Rest wird im Supermarkt dazugekauft.</p>
+
+    <label>Wie viele Zutaten darfst du zusätzlich im Supermarkt kaufen?</label>
+    <select id="r_tolerance">
+      ${[0, 1, 2, 3].map(n => `<option value="${n}" ${n === recipeTolerance ? 'selected' : ''}>${n}</option>`).join('')}
+    </select>
+
+    <div style="display:flex; gap:6px; margin-top:12px;">
+      <div class="chip ${recipeTypeFilter.has('sweet') ? 'active' : ''}" id="r_filter_sweet">🍰 Kuchen</div>
+      <div class="chip ${recipeTypeFilter.has('savory') ? 'active' : ''}" id="r_filter_savory">🍲 Herzhaft</div>
+    </div>
+
+    <div id="recipeList" style="margin-top:8px;">
+      ${rows.length ? rows.map(({ r, missing }) => `
+        <div class="recipe-row" data-id="${r.id}">
+          <span class="rname">${r.type === 'sweet' ? '🍰' : '🍲'} ${escapeHtml(r.name)}</span>
+          <span class="hint">${missing === 0 ? 'alles in der Nähe' : missing + ' zum Dazukaufen'}</span>
+        </div>`).join('') : '<div class="hint" style="padding:12px 0;">Keine Rezepte bei dieser Toleranz – Toleranz erhöhen oder mehr Orte eintragen.</div>'}
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" id="recipeClose">Schließen</button>
+    </div>
+  `;
+
+  document.getElementById('recipeClose').onclick = () => recipeModal.classList.remove('open');
+  document.getElementById('r_tolerance').onchange = (e) => { recipeTolerance = parseInt(e.target.value, 10); renderRecipeList(); };
+  document.getElementById('r_filter_sweet').onclick = () => { toggleRecipeFilter('sweet'); };
+  document.getElementById('r_filter_savory').onclick = () => { toggleRecipeFilter('savory'); };
+  document.querySelectorAll('.recipe-row').forEach(row => {
+    row.onclick = () => openRecipeDetail(RECIPES.find(r => r.id === row.dataset.id));
+  });
+}
+
+function toggleRecipeFilter(type) {
+  if (recipeTypeFilter.has(type) && recipeTypeFilter.size > 1) recipeTypeFilter.delete(type);
+  else recipeTypeFilter.add(type);
+  renderRecipeList();
+}
+
+function openRecipeDetail(recipe) {
+  activeRecipe = recipe;
+  const matches = recipe.ingredients.map(id => ({ id, ing: INGREDIENTS[id], found: findNearestForIngredient(id) }));
+  recipeSelectedIngredients = new Set(matches.filter(m => m.found).map(m => m.id));
+
+  document.getElementById('recipeContent').innerHTML = `
+    <h2>${recipe.type === 'sweet' ? '🍰' : '🍲'} ${escapeHtml(recipe.name)}</h2>
+    <div id="ingredientList">
+      ${matches.map(m => `
+        <div class="ingredient-row">
+          ${m.found ? `<input type="checkbox" class="i_check" data-id="${m.id}" checked>` : '<span style="width:16px;"></span>'}
+          <span class="istatus">
+            ${escapeHtml(m.ing.label)}
+            ${m.found
+              ? `<span class="ifound"> – ${escapeHtml(m.found.place.name)} (${m.found.distance.toFixed(1)} km)</span>`
+              : '<span class="imissing"> – nicht in der Nähe, Supermarkt</span>'}
+          </span>
+        </div>`).join('')}
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="recipeBack">Zurück</button>
+      <button class="btn-save" id="recipeRoute">🗺️ Route öffnen</button>
+    </div>
+  `;
+
+  document.getElementById('recipeBack').onclick = () => renderRecipeList();
+  document.querySelectorAll('.i_check').forEach(cb => {
+    cb.onchange = () => { if (cb.checked) recipeSelectedIngredients.add(cb.dataset.id); else recipeSelectedIngredients.delete(cb.dataset.id); };
+  });
+  document.getElementById('recipeRoute').onclick = () => openRecipeRoute(matches);
+}
+
+function openRecipeRoute(matches) {
+  const stops = [];
+  const seenSpots = new Set();
+  matches
+    .filter(m => m.found && recipeSelectedIngredients.has(m.id))
+    .sort((a, b) => a.found.distance - b.found.distance)
+    .forEach(m => {
+      const spotKey = `${m.found.place.lat.toFixed(4)}_${m.found.place.lng.toFixed(4)}`;
+      if (seenSpots.has(spotKey)) return;
+      seenSpots.add(spotKey);
+      stops.push(m.found.place);
+    });
+
+  if (!stops.length) { alert('Keine Zutaten ausgewählt, die in der Nähe verfügbar sind.'); return; }
+
+  const origin = recipeOrigin();
+  const originStr = `${origin.lat},${origin.lng}`;
+  const destination = stops[stops.length - 1];
+  const waypoints = stops.slice(0, -1).map(p => `${p.lat},${p.lng}`).join('|');
+
+  let url = `https://www.google.com/maps/dir/?api=1&origin=${originStr}&destination=${destination.lat},${destination.lng}`;
+  if (waypoints) url += `&waypoints=${encodeURIComponent(waypoints)}`;
+  window.open(url, '_blank');
+}
 
 // -- Start --
 loadPlaces();
