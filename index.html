@@ -105,11 +105,31 @@
   .product-row button { border: none; background: #eee; border-radius: 6px; cursor: pointer; padding: 0 10px; }
 
   #featureRequestBtn {
+    position: fixed; left: 20px; bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 800;
+    border: none; border-radius: 999px; background: var(--yellow); color: #2b2b26;
+    padding: 12px 18px; font-size: 14px; font-weight: 600; cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  #addBtn {
     position: fixed; right: 20px; bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 800;
     border: none; border-radius: 999px; background: var(--yellow); color: #2b2b26;
     padding: 12px 18px; font-size: 14px; font-weight: 600; cursor: pointer;
     box-shadow: 0 2px 8px rgba(0,0,0,0.3);
   }
+  #addBtn.cancel { background: #c1443c; color: white; }
+
+  .add-menu {
+    display: none; position: fixed; right: 20px; bottom: calc(78px + env(safe-area-inset-bottom)); z-index: 800;
+    flex-direction: column; gap: 8px; align-items: flex-end;
+  }
+  .add-menu.open { display: flex; }
+  .add-menu button {
+    border: none; border-radius: 999px; background: white; color: #2b2b26;
+    padding: 10px 16px; font-size: 13px; font-weight: 600; cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3); white-space: nowrap;
+  }
+  .add-menu button:active { background: #f0e9d8; }
 
   #infoBtn {
     background: none; border: 1px solid rgba(255,255,255,0.5); color: white;
@@ -160,6 +180,20 @@
     #sidebar.open { transform: translateX(0); }
     #layout { position: relative; }
     #toggleSidebarBtn { display: inline-block !important; }
+    #headerActions { width: 100%; gap: 6px; }
+    #headerActions button.primary {
+      flex: 1; min-width: 0; white-space: normal; text-align: center; line-height: 1.2;
+      overflow-wrap: break-word; word-break: break-word; -webkit-hyphens: auto; hyphens: auto;
+      padding: 8px 4px; font-size: 12.5px;
+      height: 50px; display: flex; align-items: center; justify-content: center;
+    }
+    #featureRequestBtn, #addBtn {
+      padding: 10px 14px; font-size: 13px;
+      overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+    }
+    #featureRequestBtn { left: 14px; max-width: 145px; }
+    #addBtn { right: 14px; max-width: 190px; }
+    .add-menu { right: 14px; }
   }
 </style>
 </head>
@@ -170,12 +204,11 @@
     <h1>🌳 Der Gelbe Baum</h1>
     <button id="infoBtn" title="Was ist Der Gelbe Baum?">i</button>
   </div>
-  <div style="display:flex; gap:8px; align-items:center;">
+  <div id="headerActions" style="display:flex; gap:8px; align-items:center;">
     <button id="toggleSidebarBtn" class="primary" style="display:none; background:white;">☰ Menü</button>
     <button id="recipeBtn" class="primary" style="background:white;">🍳 Rezept-Planer</button>
     <button id="basketBtn" class="primary" style="background:white;">🧺 Einkaufskorb<span id="basketCount"></span></button>
     <button id="rankingBtn" class="primary" style="background:white;">🏆 Rangliste</button>
-    <button id="addBtn" class="primary">＋ Bodenschatz melden</button>
   </div>
 </header>
 
@@ -302,6 +335,11 @@
 </div>
 
 <button id="featureRequestBtn">💡 Was fehlt dir?</button>
+<div id="addMenu" class="add-menu">
+  <button id="addAtLocation">📍 An meinem Standort</button>
+  <button id="addPickLocation">🗺️ Anderen Standort wählen</button>
+</div>
+<button id="addBtn">＋ Bodenschatz melden</button>
 
 <!-- Funktionswunsch -->
 <div class="modal-overlay" id="feedbackModal">
@@ -1271,7 +1309,7 @@ document.getElementById('locateBtn').onclick = () => {
   );
 };
 
-document.getElementById('locateAndAddBtn').onclick = () => {
+function reportAtMyLocation() {
   if (!navigator.geolocation) { alert('Standort wird von diesem Browser nicht unterstützt.'); return; }
   navigator.geolocation.getCurrentPosition(
     pos => {
@@ -1281,7 +1319,8 @@ document.getElementById('locateAndAddBtn').onclick = () => {
     },
     () => alert('Standort konnte nicht ermittelt werden. Bitte Standortfreigabe im Browser erlauben.')
   );
-};
+}
+document.getElementById('locateAndAddBtn').onclick = reportAtMyLocation;
 
 // -- Sidebar-Toggle mobil --
 document.getElementById('toggleSidebarBtn').onclick = (e) => {
@@ -1295,21 +1334,40 @@ document.addEventListener('click', (e) => {
   sidebar.classList.remove('open');
 });
 
-// -- Ort melden: Platzierungsmodus --
+// -- Ort melden: Auswahl-Menü & Platzierungsmodus --
 const addBtn = document.getElementById('addBtn');
 const banner = document.getElementById('placementBanner');
-addBtn.onclick = () => {
+const addMenu = document.getElementById('addMenu');
+
+function enterPlacementMode() {
   placementMode = true;
   banner.classList.add('open');
   addBtn.textContent = '✕ Abbrechen';
   addBtn.classList.add('cancel');
-};
+}
 function exitPlacementMode() {
   placementMode = false;
   banner.classList.remove('open');
   addBtn.textContent = '＋ Bodenschatz melden';
   addBtn.classList.remove('cancel');
 }
+addBtn.onclick = () => {
+  if (placementMode) { exitPlacementMode(); return; }
+  addMenu.classList.toggle('open');
+};
+document.getElementById('addAtLocation').onclick = () => {
+  addMenu.classList.remove('open');
+  reportAtMyLocation();
+};
+document.getElementById('addPickLocation').onclick = () => {
+  addMenu.classList.remove('open');
+  enterPlacementMode();
+};
+document.addEventListener('click', (e) => {
+  if (!addMenu.classList.contains('open')) return;
+  if (addMenu.contains(e.target) || e.target === addBtn) return;
+  addMenu.classList.remove('open');
+});
 document.getElementById('cancelPlacement').onclick = (e) => { e.preventDefault(); exitPlacementMode(); };
 
 map.on('click', (e) => {
