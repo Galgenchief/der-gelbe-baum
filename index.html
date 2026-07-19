@@ -1311,7 +1311,7 @@ function openRecipeRoute(matches) {
     // optimize:true lässt Google Maps die Reihenfolge der Stopps für die schnellste Route berechnen
     url += `&waypoints=${encodeURIComponent('optimize:true|' + waypointStops.join('|'))}`;
   }
-  window.open(url, '_blank');
+  window.location.href = url;
 }
 
 // -- Funktionswunsch --
