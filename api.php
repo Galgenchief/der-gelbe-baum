@@ -75,6 +75,8 @@ switch ($action) {
         foreach ($places as &$p) {
             unset($p['owner_token']);
             $p['avg_rating'] = round((float)$p['avg_rating'], 1);
+            $p['lat'] = (float)$p['lat'];
+            $p['lng'] = (float)$p['lng'];
         }
         respond($places);
         break;
@@ -88,6 +90,8 @@ switch ($action) {
         $place = $stmt->fetch();
         if (!$place) fail('Ort nicht gefunden', 404);
         unset($place['owner_token']);
+        $place['lat'] = (float)$place['lat'];
+        $place['lng'] = (float)$place['lng'];
 
         $stmt = db()->prepare('SELECT stars FROM ratings WHERE place_id = ?');
         $stmt->execute([$id]);
