@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS places (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   category VARCHAR(30) NOT NULL,
+  subcategory VARCHAR(30) NOT NULL DEFAULT '',
   access ENUM('public','private') NOT NULL DEFAULT 'private',
   description TEXT,
   season VARCHAR(255),

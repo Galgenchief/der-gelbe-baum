@@ -158,6 +158,12 @@
     <label>Kategorie</label>
     <select id="f_category"></select>
 
+    <div id="subcatField" style="display:none;">
+      <label>Art</label>
+      <select id="f_subcategory"></select>
+      <div class="hint" id="mushroomHint" style="display:none;">⚠️ Nur zur groben Einordnung – vor dem Verzehr immer sicher bestimmen lassen (z. B. durch einen Pilzsachverständigen).</div>
+    </div>
+
     <label>Zugang</label>
     <select id="f_access">
       <option value="public">🌍 Öffentlich zugänglich</option>
@@ -227,7 +233,7 @@
 const API = 'api.php';
 
 const CATS = {
-  wildfruit:      { label: 'Wildobst / öffentlicher Baum', icon: '🌳', color: '#6b8e23' },
+  fruittrees:     { label: 'Obstbäume',                     icon: '🍎', color: '#6b8e23' },
   nuts:           { label: 'Nüsse',                        icon: '🌰', color: '#8b5a2b' },
   herbs:          { label: 'Wildkräuter',                  icon: '🌿', color: '#4a7c3c' },
   berries:        { label: 'Beerensträucher',               icon: '🫐', color: '#6a3d9a' },
@@ -241,6 +247,27 @@ const CATS = {
   market:         { label: 'Marktstand (regelmäßig)',       icon: '🧺', color: '#2a9d8f' },
   homerestaurant: { label: 'Home Restaurant',                icon: '🍽️', color: '#c1443c' },
   other:          { label: 'Sonstiges',                     icon: '📍', color: '#777777' },
+};
+
+// Unterkategorien: nur für Kategorien mit Eintrag hier vorhanden
+const SUBCATS = {
+  fruittrees: [
+    ['apple', 'Apfel'], ['pear', 'Birne'], ['cherry', 'Kirsche'], ['plum', 'Zwetschge/Pflaume'],
+    ['mirabelle', 'Mirabelle'], ['quince', 'Quitte'], ['apricot', 'Aprikose'], ['peach', 'Pfirsich'],
+    ['other', 'Sonstige Art'],
+  ],
+  berries: [
+    ['raspberry', 'Himbeere'], ['currant', 'Johannisbeere'], ['gooseberry', 'Stachelbeere'],
+    ['blackberry', 'Brombeere'], ['elderberry', 'Holunder'], ['blueberry', 'Heidelbeere'],
+    ['seabuckthorn', 'Sanddorn'], ['other', 'Sonstige Art'],
+  ],
+  nuts: [
+    ['walnut', 'Walnuss'], ['hazelnut', 'Haselnuss'], ['chestnut', 'Esskastanie'], ['other', 'Sonstige Art'],
+  ],
+  mushroom: [
+    ['porcini', 'Steinpilz'], ['chanterelle', 'Pfifferling'], ['baybolete', 'Maronenröhrling'],
+    ['champignon', 'Champignon'], ['parasol', 'Parasol'], ['other', 'Sonstige Art'],
+  ],
 };
 
 // -- State --
@@ -317,6 +344,18 @@ Object.entries(CATS).forEach(([key, cat]) => {
   catSelect.appendChild(opt);
 });
 
+function updateSubcatOptions(preselect = '') {
+  const subs = SUBCATS[catSelect.value];
+  const subField = document.getElementById('subcatField');
+  const subSelect = document.getElementById('f_subcategory');
+  document.getElementById('mushroomHint').style.display = catSelect.value === 'mushroom' ? 'block' : 'none';
+  if (!subs) { subField.style.display = 'none'; subSelect.innerHTML = ''; return; }
+  subField.style.display = 'block';
+  subSelect.innerHTML = subs.map(([id, label]) => `<option value="${id}">${label}</option>`).join('');
+  if (preselect) subSelect.value = preselect;
+}
+catSelect.onchange = () => updateSubcatOptions();
+
 // -- Daten laden --
 async function loadPlaces() {
   const res = await fetch(`${API}?action=list`);
@@ -376,7 +415,7 @@ function render() {
         <div class="name">${escapeHtml(p.name)}
           <span class="badge ${p.access}">${p.access === 'public' ? '🌍' : '🔒'}</span>
         </div>
-        <div class="meta">${cat.label}${p._dist != null ? ' · ' + p._dist.toFixed(1) + ' km' : ''}${p.avg_rating > 0 ? ' · ⭐ ' + p.avg_rating : ''}</div>
+        <div class="meta">${cat.label}${subLabel(p.category, p.subcategory) ? ' – ' + subLabel(p.category, p.subcategory) : ''}${p._dist != null ? ' · ' + p._dist.toFixed(1) + ' km' : ''}${p.avg_rating > 0 ? ' · ⭐ ' + p.avg_rating : ''}</div>
       </div>`;
     div.onclick = () => { openDetail(p.id); map.setView([p.lat, p.lng], 15); };
     listEl.appendChild(div);
@@ -387,9 +426,16 @@ function popupHtml(p) {
   const cat = CATS[p.category] || CATS.other;
   return `<div style="min-width:160px;">
     <strong>${cat.icon} ${escapeHtml(p.name)}</strong><br>
-    <span style="font-size:12px; color:#777;">${cat.label}</span><br>
+    <span style="font-size:12px; color:#777;">${cat.label}${subLabel(p.category, p.subcategory) ? ' – ' + subLabel(p.category, p.subcategory) : ''}</span><br>
     <button id="detailBtn-${p.id}" style="margin-top:8px; background:#e0a800; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:12px;">Details ansehen</button>
   </div>`;
+}
+
+function subLabel(category, subcategory) {
+  const subs = SUBCATS[category];
+  if (!subs || !subcategory) return '';
+  const found = subs.find(([id]) => id === subcategory);
+  return found ? found[1] : '';
 }
 
 function escapeHtml(str) {
@@ -458,6 +504,7 @@ function resetForm() {
   document.getElementById('f_photo').value = '';
   document.getElementById('photoStatus').textContent = '';
   uploadedPhotoPath = '';
+  updateSubcatOptions();
 }
 
 function addProductRow(name = '', price = '') {
@@ -485,6 +532,7 @@ function openForm(place, latlng) {
   if (place) {
     document.getElementById('f_name').value = place.name;
     document.getElementById('f_category').value = place.category;
+    updateSubcatOptions(place.subcategory || '');
     document.getElementById('f_access').value = place.access;
     document.getElementById('f_description').value = place.description || '';
     document.getElementById('f_season').value = place.season || '';
@@ -562,6 +610,7 @@ document.getElementById('formSave').onclick = async () => {
   const payload = {
     name,
     category: document.getElementById('f_category').value,
+    subcategory: SUBCATS[document.getElementById('f_category').value] ? document.getElementById('f_subcategory').value : '',
     access: document.getElementById('f_access').value,
     description: document.getElementById('f_description').value.trim(),
     season: document.getElementById('f_season').value.trim(),
@@ -621,7 +670,7 @@ function renderDetail(p) {
     <h2>${cat.icon} ${escapeHtml(p.name)}
       <span class="badge ${p.access}">${p.access === 'public' ? '🌍 Öffentlich' : '🔒 Privat'}</span>
     </h2>
-    <div style="font-size:13px; color:#777;">${cat.label}</div>
+    <div style="font-size:13px; color:#777;">${cat.label}${subLabel(p.category, p.subcategory) ? ' – ' + subLabel(p.category, p.subcategory) : ''}</div>
     ${p.photo ? `<img id="detailPhoto" src="${p.photo}">` : ''}
     <p style="white-space:pre-wrap;">${escapeHtml(p.description) || '<em>Keine Beschreibung</em>'}</p>
     ${p.season ? `<div><strong>Saison / Öffnungszeiten:</strong> ${escapeHtml(p.season)}</div>` : ''}

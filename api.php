@@ -4,10 +4,22 @@ require_once __DIR__ . '/db.php';
 header('Content-Type: application/json; charset=utf-8');
 
 const CATEGORIES = [
-    'wildfruit', 'nuts', 'herbs', 'berries', 'mushroom', 'flowerfield',
+    'fruittrees', 'nuts', 'herbs', 'berries', 'mushroom', 'flowerfield',
     'eggs', 'milk', 'produce', 'honey', 'farmshop', 'market',
     'homerestaurant', 'other',
 ];
+
+const SUBCATEGORIES = [
+    'fruittrees' => ['apple', 'pear', 'cherry', 'plum', 'mirabelle', 'quince', 'apricot', 'peach', 'other'],
+    'berries' => ['raspberry', 'currant', 'gooseberry', 'blackberry', 'elderberry', 'blueberry', 'seabuckthorn', 'other'],
+    'nuts' => ['walnut', 'hazelnut', 'chestnut', 'other'],
+    'mushroom' => ['porcini', 'chanterelle', 'baybolete', 'champignon', 'parasol', 'other'],
+];
+
+function validSubcategory(string $category, string $subcategory): string {
+    if ($subcategory === '' || !isset(SUBCATEGORIES[$category])) return '';
+    return in_array($subcategory, SUBCATEGORIES[$category], true) ? $subcategory : '';
+}
 
 function respond($data, int $code = 200): void {
     http_response_code($code);
@@ -96,16 +108,18 @@ switch ($action) {
         }
 
         $token = ownerToken();
+        $subcategory = validSubcategory($category, (string)($in['subcategory'] ?? ''));
 
         $stmt = db()->prepare('
             INSERT INTO places
-                (name, category, access, description, season, price, free_harvest, honesty_box,
+                (name, category, subcategory, access, description, season, price, free_harvest, honesty_box,
                  orderable, contact_email, contact_phone, lat, lng, photo, owner_token)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ');
         $stmt->execute([
             $name,
             $category,
+            $subcategory,
             $access,
             (string)($in['description'] ?? ''),
             (string)($in['season'] ?? ''),
@@ -154,10 +168,11 @@ switch ($action) {
         if ($orderable && trim((string)($in['contact_email'] ?? '')) === '') {
             fail('Für Bestellfunktion wird eine Kontakt-E-Mail benötigt');
         }
+        $subcategory = validSubcategory($category, (string)($in['subcategory'] ?? ''));
 
         $stmt = db()->prepare('
             UPDATE places SET
-                name = ?, category = ?, access = ?, description = ?, season = ?, price = ?,
+                name = ?, category = ?, subcategory = ?, access = ?, description = ?, season = ?, price = ?,
                 free_harvest = ?, honesty_box = ?, orderable = ?, contact_email = ?, contact_phone = ?,
                 photo = COALESCE(NULLIF(?, \'\'), photo)
             WHERE id = ?
@@ -165,6 +180,7 @@ switch ($action) {
         $stmt->execute([
             $name,
             $category,
+            $subcategory,
             $access,
             (string)($in['description'] ?? ''),
             (string)($in['season'] ?? ''),
