@@ -367,6 +367,22 @@ switch ($action) {
         respond($orders);
         break;
 
+    case 'feedback_send':
+        $in = jsonInput();
+        $message = trim((string)($in['message'] ?? ''));
+        $contact = trim((string)($in['contact'] ?? ''));
+        if ($message === '') fail('Bitte eine Nachricht eingeben');
+
+        db()->prepare('INSERT INTO feedback (message, contact) VALUES (?, ?)')
+            ->execute([mb_substr($message, 0, 5000), mb_substr($contact, 0, 255)]);
+
+        $body = "Neues Feedback über Der Gelbe Baum:\n\n{$message}\n\n"
+            . ($contact !== '' ? "Kontakt: {$contact}\n" : "Kontakt: (nicht angegeben)\n");
+        @mail(FEEDBACK_TO, 'Neues Feedback: Der Gelbe Baum', $body, 'From: ' . MAIL_FROM);
+
+        respond(['ok' => true]);
+        break;
+
     default:
         fail('Unbekannte Aktion', 404);
 }

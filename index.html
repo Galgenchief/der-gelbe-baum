@@ -93,6 +93,13 @@
   .product-row input { flex: 1; }
   .product-row button { border: none; background: #eee; border-radius: 6px; cursor: pointer; padding: 0 10px; }
 
+  #feedbackBtn {
+    position: fixed; bottom: 20px; right: 20px; z-index: 800;
+    background: var(--green); color: white; border: none; border-radius: 999px;
+    padding: 12px 18px; font-size: 14px; font-weight: 600; cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+
   .subcat-checks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
   .subcat-chip { border: 1px solid var(--border); border-radius: 999px; padding: 5px 10px; font-size: 12px; cursor: pointer; background: white; user-select: none; }
   .subcat-chip.active { background: var(--yellow); border-color: var(--yellow-dark); }
@@ -260,6 +267,24 @@
 <!-- Rezept-Planer -->
 <div class="modal-overlay" id="recipeModal">
   <div class="modal" id="recipeContent" style="max-width:560px;"></div>
+</div>
+
+<button id="feedbackBtn">💬 Feedback</button>
+
+<!-- Feedback -->
+<div class="modal-overlay" id="feedbackModal">
+  <div class="modal">
+    <h2>💬 Feedback</h2>
+    <p class="hint">Verbesserungsvorschlag, Bug oder Idee – geht direkt an die Entwicklung.</p>
+    <label>Deine Nachricht</label>
+    <textarea id="fb_message" maxlength="5000" placeholder="Was ist dir aufgefallen?"></textarea>
+    <label>Kontakt (optional, für Rückfragen)</label>
+    <input type="text" id="fb_contact" placeholder="E-Mail oder Telefon">
+    <div class="modal-actions">
+      <button class="btn-cancel" id="feedbackCancel">Abbrechen</button>
+      <button class="btn-save" id="feedbackSend">Senden</button>
+    </div>
+  </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1243,6 +1268,29 @@ function openRecipeRoute(matches) {
   if (waypoints) url += `&waypoints=${encodeURIComponent(waypoints)}`;
   window.open(url, '_blank');
 }
+
+// -- Feedback --
+const feedbackModal = document.getElementById('feedbackModal');
+document.getElementById('feedbackBtn').onclick = () => {
+  document.getElementById('fb_message').value = '';
+  document.getElementById('fb_contact').value = '';
+  feedbackModal.classList.add('open');
+};
+document.getElementById('feedbackCancel').onclick = () => feedbackModal.classList.remove('open');
+document.getElementById('feedbackSend').onclick = async () => {
+  const message = document.getElementById('fb_message').value.trim();
+  if (!message) { alert('Bitte eine Nachricht eingeben.'); return; }
+  const contact = document.getElementById('fb_contact').value.trim();
+  try {
+    const res = await fetch(`${API}?action=feedback_send`, { method: 'POST', body: JSON.stringify({ message, contact }) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    feedbackModal.classList.remove('open');
+    alert('Danke für dein Feedback!');
+  } catch (err) {
+    alert('Fehler: ' + err.message);
+  }
+};
 
 // -- Start --
 loadPlaces();

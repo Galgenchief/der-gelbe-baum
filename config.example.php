@@ -10,3 +10,6 @@ define('DB_PASS', 'DEIN_DB_PASSWORT');
 
 // Absender-Adresse für Bestell-Benachrichtigungen per E-Mail
 define('MAIL_FROM', 'noreply@deine-domain.de');
+
+// Empfänger-Adresse für Feedback aus der App
+define('FEEDBACK_TO', 'business@winkler-online.com');
