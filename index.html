@@ -47,7 +47,8 @@
   .chip.active { background: var(--yellow); border-color: var(--yellow-dark); }
   #accessToggle { display: flex; gap: 6px; padding: 0 10px 8px; }
   #accessToggle .chip { flex: 1; text-align: center; }
-  #locateBtn { margin: 8px 10px; padding: 9px; border-radius: var(--radius); border: 1px solid var(--border); background: white; cursor: pointer; font-size: 13px; }
+  #locateBtn, #locateAndAddBtn { margin: 8px 10px 0; padding: 9px; border-radius: var(--radius); border: 1px solid var(--border); background: white; cursor: pointer; font-size: 13px; width: calc(100% - 20px); }
+  #locateAndAddBtn { margin-bottom: 8px; }
 
   #placeList { flex: 1; overflow-y: auto; }
   .place-item { padding: 10px 14px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; gap: 10px; align-items: flex-start; }
@@ -92,6 +93,11 @@
   .product-row input { flex: 1; }
   .product-row button { border: none; background: #eee; border-radius: 6px; cursor: pointer; padding: 0 10px; }
 
+  .hours-row { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 13px; }
+  .hours-row .h_daylabel { width: 26px; }
+  .hours-row input[type=time] { padding: 4px; border: 1px solid var(--border); border-radius: 6px; width: 100px; }
+  .hours-row.disabled { opacity: 0.4; }
+
   #detailPhoto { width: 100%; border-radius: 8px; margin-top: 10px; max-height: 220px; object-fit: cover; }
   .stars { font-size: 20px; cursor: pointer; letter-spacing: 2px; }
   .comment { border-top: 1px solid #eee; padding: 8px 0; font-size: 13px; }
@@ -127,7 +133,7 @@
   <h1>🌳 Der Gelbe Baum</h1>
   <div style="display:flex; gap:8px; align-items:center;">
     <button id="toggleSidebarBtn" class="primary" style="display:none; background:white;">☰ Liste</button>
-    <button id="addBtn" class="primary">＋ Ort melden</button>
+    <button id="addBtn" class="primary">＋ Bodenschatz melden</button>
   </div>
 </header>
 
@@ -143,6 +149,7 @@
     </div>
     <div id="filters"></div>
     <button id="locateBtn">📍 Meinen Standort verwenden</button>
+    <button id="locateAndAddBtn">📍➕ Bodenschatz an meinem Standort melden</button>
     <div id="placeList"></div>
   </div>
   <div id="map"></div>
@@ -151,7 +158,7 @@
 <!-- Formular: Ort anlegen / bearbeiten -->
 <div class="modal-overlay" id="formModal">
   <div class="modal">
-    <h2 id="formTitle">Neuen Ort melden</h2>
+    <h2 id="formTitle">Neuen Bodenschatz melden</h2>
     <label>Name</label>
     <input type="text" id="f_name" maxlength="255">
 
@@ -173,8 +180,12 @@
     <label>Beschreibung</label>
     <textarea id="f_description" maxlength="2000"></textarea>
 
-    <label>Saison / Öffnungszeiten (optional)</label>
-    <input type="text" id="f_season" placeholder="z. B. Juli–September, Mi & Sa 14–18 Uhr">
+    <label>Saison (optional)</label>
+    <input type="text" id="f_season" placeholder="z. B. Juli–September">
+
+    <label>Öffnungszeiten</label>
+    <div class="checkline"><input type="checkbox" id="f_always_open"> <label style="margin:0;">Immer geöffnet</label></div>
+    <div id="hoursGrid"></div>
 
     <label>Preis (optional)</label>
     <input type="text" id="f_price" placeholder="z. B. 2 €/kg, kostenlos, Spende">
@@ -269,10 +280,38 @@ const SUBCATS = {
   ],
   farmshop: [
     ['eggs', 'Eier'], ['milk', 'Milch'], ['yogurt', 'Joghurt'], ['cheese', 'Käse'], ['butter', 'Butter'],
-    ['cream', 'Sahne'], ['quark', 'Quark'], ['icecream', 'Eis'], ['meat', 'Wurst & Fleisch'],
+    ['cream', 'Sahne'], ['quark', 'Quark'], ['icecream', 'Eis'], ['honey', 'Honig'], ['meat', 'Wurst & Fleisch'],
     ['jam', 'Marmelade'], ['juice', 'Saft'], ['vegetables', 'Kartoffeln & Gemüse'], ['other', 'Sonstiges'],
   ],
+  market: [
+    ['eggs', 'Eier'], ['dairy', 'Milchprodukte'], ['fruit', 'Obst'], ['vegetables', 'Gemüse'],
+    ['honey', 'Honig'], ['baked', 'Backwaren'], ['flowers', 'Blumen'], ['meat', 'Wurst & Fleisch'],
+    ['cheese', 'Käse'], ['jam', 'Marmelade & Eingemachtes'], ['other', 'Sonstiges'],
+  ],
+  flowerfield: [
+    ['sunflower', 'Sonnenblumen'], ['tulip', 'Tulpen'], ['dahlia', 'Dahlien'], ['lavender', 'Lavendel'],
+    ['rose', 'Rosen'], ['peony', 'Pfingstrosen'], ['marigold', 'Ringelblumen'], ['other', 'Sonstige Blumen'],
+  ],
+  herbs: [
+    ['wildgarlic', 'Bärlauch'], ['nettle', 'Brennnessel'], ['dandelion', 'Löwenzahn'], ['groundelder', 'Giersch'],
+    ['yarrow', 'Schafgarbe'], ['plantain', 'Spitzwegerich'], ['sorrel', 'Sauerampfer'], ['other', 'Sonstiges Kraut'],
+  ],
+  eggs: [
+    ['chicken', 'Hühnereier'], ['quail', 'Wachteleier'], ['duck', 'Enteneier'], ['goose', 'Gänseeier'], ['other', 'Sonstige'],
+  ],
+  milk: [
+    ['cow', 'Kuhmilch'], ['goat', 'Ziegenmilch'], ['sheep', 'Schafmilch'], ['other', 'Sonstige'],
+  ],
+  honey: [
+    ['blossom', 'Blütenhonig'], ['forest', 'Waldhonig'], ['acacia', 'Akazienhonig'], ['linden', 'Lindenhonig'], ['other', 'Sonstiger Honig'],
+  ],
+  homerestaurant: [
+    ['international', 'International'], ['italian', 'Italienisch'], ['asian', 'Asiatisch'],
+    ['german', 'Deutsch/Regional'], ['vegetarian', 'Vegetarisch/Vegan'], ['other', 'Sonstige Küche'],
+  ],
 };
+
+const WEEKDAYS = [['mo','Mo'],['tu','Di'],['we','Mi'],['th','Do'],['fr','Fr'],['sa','Sa'],['su','So']];
 
 // -- State --
 let places = [];
@@ -359,6 +398,79 @@ function updateSubcatOptions(preselect = '') {
   if (preselect) subSelect.value = preselect;
 }
 catSelect.onchange = () => updateSubcatOptions();
+
+// -- Öffnungszeiten-Raster --
+const hoursGridEl = document.getElementById('hoursGrid');
+WEEKDAYS.forEach(([id, label]) => {
+  const row = document.createElement('div');
+  row.className = 'hours-row';
+  row.dataset.day = id;
+  row.innerHTML = `
+    <input type="checkbox" class="h_open">
+    <span class="h_daylabel">${label}</span>
+    <input type="time" class="h_from" value="09:00">
+    <span>–</span>
+    <input type="time" class="h_to" value="18:00">`;
+  const openCheck = row.querySelector('.h_open');
+  const fromEl = row.querySelector('.h_from');
+  const toEl = row.querySelector('.h_to');
+  const syncEnabled = () => { fromEl.disabled = toEl.disabled = !openCheck.checked; row.classList.toggle('disabled', !openCheck.checked); };
+  openCheck.onchange = syncEnabled;
+  syncEnabled();
+  hoursGridEl.appendChild(row);
+});
+
+function setHoursAlwaysOpen(always) {
+  document.getElementById('f_always_open').checked = always;
+  hoursGridEl.style.display = always ? 'none' : 'block';
+}
+document.getElementById('f_always_open').onchange = (e) => { hoursGridEl.style.display = e.target.checked ? 'none' : 'block'; };
+
+function resetHours() {
+  setHoursAlwaysOpen(false);
+  hoursGridEl.querySelectorAll('.hours-row').forEach(row => {
+    row.querySelector('.h_open').checked = false;
+    row.querySelector('.h_from').value = '09:00';
+    row.querySelector('.h_to').value = '18:00';
+    row.querySelector('.h_from').disabled = true;
+    row.querySelector('.h_to').disabled = true;
+    row.classList.add('disabled');
+  });
+}
+
+function collectHours() {
+  if (document.getElementById('f_always_open').checked) return { always: true };
+  const days = {};
+  hoursGridEl.querySelectorAll('.hours-row').forEach(row => {
+    if (row.querySelector('.h_open').checked) {
+      days[row.dataset.day] = { from: row.querySelector('.h_from').value, to: row.querySelector('.h_to').value };
+    }
+  });
+  return { always: false, days };
+}
+
+function fillHours(hours) {
+  if (!hours || hours.always) { setHoursAlwaysOpen(true); return; }
+  setHoursAlwaysOpen(false);
+  hoursGridEl.querySelectorAll('.hours-row').forEach(row => {
+    const d = (hours.days || {})[row.dataset.day];
+    const openCheck = row.querySelector('.h_open');
+    openCheck.checked = !!d;
+    row.querySelector('.h_from').value = d ? d.from : '09:00';
+    row.querySelector('.h_to').value = d ? d.to : '18:00';
+    row.querySelector('.h_from').disabled = !d;
+    row.querySelector('.h_to').disabled = !d;
+    row.classList.toggle('disabled', !d);
+  });
+}
+
+function hoursSummary(hours) {
+  if (!hours) return '';
+  if (hours.always) return 'Immer geöffnet';
+  const entries = WEEKDAYS.filter(([id]) => hours.days && hours.days[id]);
+  if (!entries.length) return '';
+  return entries.map(([id, label]) => `${label} ${hours.days[id].from}–${hours.days[id].to}`).join(', ');
+}
 
 // -- Daten laden --
 async function loadPlaces() {
@@ -461,6 +573,18 @@ document.getElementById('locateBtn').onclick = () => {
   );
 };
 
+document.getElementById('locateAndAddBtn').onclick = () => {
+  if (!navigator.geolocation) { alert('Standort wird von diesem Browser nicht unterstützt.'); return; }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const latlng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      map.setView([latlng.lat, latlng.lng], 15);
+      openForm(null, latlng);
+    },
+    () => alert('Standort konnte nicht ermittelt werden. Bitte Standortfreigabe im Browser erlauben.')
+  );
+};
+
 // -- Sidebar-Toggle mobil --
 document.getElementById('toggleSidebarBtn').onclick = () => document.getElementById('sidebar').classList.toggle('open');
 
@@ -476,7 +600,7 @@ addBtn.onclick = () => {
 function exitPlacementMode() {
   placementMode = false;
   banner.classList.remove('open');
-  addBtn.textContent = '＋ Ort melden';
+  addBtn.textContent = '＋ Bodenschatz melden';
   addBtn.classList.remove('cancel');
 }
 document.getElementById('cancelPlacement').onclick = (e) => { e.preventDefault(); exitPlacementMode(); };
@@ -509,6 +633,7 @@ function resetForm() {
   document.getElementById('photoStatus').textContent = '';
   uploadedPhotoPath = '';
   updateSubcatOptions();
+  resetHours();
 }
 
 function addProductRow(name = '', price = '') {
@@ -531,7 +656,7 @@ function openForm(place, latlng) {
   resetForm();
   editingId = place ? place.id : null;
   pendingLatLng = latlng || (place ? { lat: place.lat, lng: place.lng } : null);
-  document.getElementById('formTitle').textContent = place ? 'Ort bearbeiten' : 'Neuen Ort melden';
+  document.getElementById('formTitle').textContent = place ? 'Bodenschatz bearbeiten' : 'Neuen Bodenschatz melden';
 
   if (place) {
     document.getElementById('f_name').value = place.name;
@@ -549,6 +674,7 @@ function openForm(place, latlng) {
     document.getElementById('f_contact_phone').value = place.contact_phone || '';
     uploadedPhotoPath = place.photo || '';
     (place.products || []).forEach(p => addProductRow(p.name, p.price));
+    fillHours(place.hours ? JSON.parse(place.hours) : null);
   }
 
   formModal.classList.add('open');
@@ -618,6 +744,7 @@ document.getElementById('formSave').onclick = async () => {
     access: document.getElementById('f_access').value,
     description: document.getElementById('f_description').value.trim(),
     season: document.getElementById('f_season').value.trim(),
+    hours: JSON.stringify(collectHours()),
     price: document.getElementById('f_price').value.trim(),
     free_harvest: document.getElementById('f_free').checked,
     honesty_box: document.getElementById('f_honesty').checked,
@@ -677,7 +804,8 @@ function renderDetail(p) {
     <div style="font-size:13px; color:#777;">${cat.label}${subLabel(p.category, p.subcategory) ? ' – ' + subLabel(p.category, p.subcategory) : ''}</div>
     ${p.photo ? `<img id="detailPhoto" src="${p.photo}">` : ''}
     <p style="white-space:pre-wrap;">${escapeHtml(p.description) || '<em>Keine Beschreibung</em>'}</p>
-    ${p.season ? `<div><strong>Saison / Öffnungszeiten:</strong> ${escapeHtml(p.season)}</div>` : ''}
+    ${p.season ? `<div><strong>Saison:</strong> ${escapeHtml(p.season)}</div>` : ''}
+    ${hoursSummary(p.hours ? JSON.parse(p.hours) : null) ? `<div><strong>Öffnungszeiten:</strong> ${escapeHtml(hoursSummary(JSON.parse(p.hours)))}</div>` : ''}
     ${p.price ? `<div><strong>Preis:</strong> ${escapeHtml(p.price)}</div>` : ''}
     ${p.free_harvest ? '<div>✅ Kostenlos</div>' : ''}
     ${p.honesty_box ? '<div>💶 Kasse/Automat vorhanden</div>' : ''}

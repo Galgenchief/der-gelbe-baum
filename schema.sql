@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS places (
   access ENUM('public','private') NOT NULL DEFAULT 'private',
   description TEXT,
   season VARCHAR(255),
+  hours TEXT,
   price VARCHAR(255),
   free_harvest TINYINT(1) NOT NULL DEFAULT 0,
   honesty_box TINYINT(1) NOT NULL DEFAULT 0,

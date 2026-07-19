@@ -14,12 +14,25 @@ const SUBCATEGORIES = [
     'berries' => ['raspberry', 'currant', 'gooseberry', 'blackberry', 'elderberry', 'blueberry', 'seabuckthorn', 'other'],
     'nuts' => ['walnut', 'hazelnut', 'chestnut', 'other'],
     'mushroom' => ['porcini', 'chanterelle', 'baybolete', 'champignon', 'parasol', 'other'],
-    'farmshop' => ['eggs', 'milk', 'yogurt', 'cheese', 'butter', 'cream', 'quark', 'icecream', 'meat', 'jam', 'juice', 'vegetables', 'other'],
+    'farmshop' => ['eggs', 'milk', 'yogurt', 'cheese', 'butter', 'cream', 'quark', 'icecream', 'honey', 'meat', 'jam', 'juice', 'vegetables', 'other'],
+    'market' => ['eggs', 'dairy', 'fruit', 'vegetables', 'honey', 'baked', 'flowers', 'meat', 'cheese', 'jam', 'other'],
+    'flowerfield' => ['sunflower', 'tulip', 'dahlia', 'lavender', 'rose', 'peony', 'marigold', 'other'],
+    'herbs' => ['wildgarlic', 'nettle', 'dandelion', 'groundelder', 'yarrow', 'plantain', 'sorrel', 'other'],
+    'eggs' => ['chicken', 'quail', 'duck', 'goose', 'other'],
+    'milk' => ['cow', 'goat', 'sheep', 'other'],
+    'honey' => ['blossom', 'forest', 'acacia', 'linden', 'other'],
+    'homerestaurant' => ['international', 'italian', 'asian', 'german', 'vegetarian', 'other'],
 ];
 
 function validSubcategory(string $category, string $subcategory): string {
     if ($subcategory === '' || !isset(SUBCATEGORIES[$category])) return '';
     return in_array($subcategory, SUBCATEGORIES[$category], true) ? $subcategory : '';
+}
+
+function validHours(string $json): string {
+    $decoded = json_decode($json, true);
+    if (!is_array($decoded)) return '{"always":false,"days":{}}';
+    return json_encode($decoded);
 }
 
 function respond($data, int $code = 200): void {
@@ -110,12 +123,13 @@ switch ($action) {
 
         $token = ownerToken();
         $subcategory = validSubcategory($category, (string)($in['subcategory'] ?? ''));
+        $hours = validHours((string)($in['hours'] ?? ''));
 
         $stmt = db()->prepare('
             INSERT INTO places
-                (name, category, subcategory, access, description, season, price, free_harvest, honesty_box,
+                (name, category, subcategory, access, description, season, hours, price, free_harvest, honesty_box,
                  orderable, contact_email, contact_phone, lat, lng, photo, owner_token)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ');
         $stmt->execute([
             $name,
@@ -124,6 +138,7 @@ switch ($action) {
             $access,
             (string)($in['description'] ?? ''),
             (string)($in['season'] ?? ''),
+            $hours,
             (string)($in['price'] ?? ''),
             !empty($in['free_harvest']) ? 1 : 0,
             !empty($in['honesty_box']) ? 1 : 0,
@@ -170,10 +185,11 @@ switch ($action) {
             fail('Für Bestellfunktion wird eine Kontakt-E-Mail benötigt');
         }
         $subcategory = validSubcategory($category, (string)($in['subcategory'] ?? ''));
+        $hours = validHours((string)($in['hours'] ?? ''));
 
         $stmt = db()->prepare('
             UPDATE places SET
-                name = ?, category = ?, subcategory = ?, access = ?, description = ?, season = ?, price = ?,
+                name = ?, category = ?, subcategory = ?, access = ?, description = ?, season = ?, hours = ?, price = ?,
                 free_harvest = ?, honesty_box = ?, orderable = ?, contact_email = ?, contact_phone = ?,
                 photo = COALESCE(NULLIF(?, \'\'), photo)
             WHERE id = ?
@@ -185,6 +201,7 @@ switch ($action) {
             $access,
             (string)($in['description'] ?? ''),
             (string)($in['season'] ?? ''),
+            $hours,
             (string)($in['price'] ?? ''),
             !empty($in['free_harvest']) ? 1 : 0,
             !empty($in['honesty_box']) ? 1 : 0,
