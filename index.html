@@ -2,13 +2,14 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Der Gelbe Baum</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#3a5a40">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Gelber Baum">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
@@ -22,11 +23,15 @@
     --radius: 10px;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: var(--text); background: var(--bg); }
-
+  body {
+    margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--text); background: var(--bg);
+    display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+  }
+  html, body { background: var(--green); }
   header {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 16px; background: var(--green); color: white; gap: 10px; flex-wrap: wrap;
+    padding: calc(10px + env(safe-area-inset-top)) 16px 10px; background: var(--green); color: white; gap: 10px; flex-wrap: wrap;
   }
   header h1 { font-size: 18px; margin: 0; display: flex; align-items: center; gap: 8px; }
   header button.primary {
@@ -36,7 +41,7 @@
   header button.primary:active { background: var(--yellow-dark); }
   header button.primary.cancel { background: #c1443c; color: white; }
 
-  #layout { display: flex; height: calc(100vh - 56px); }
+  #layout { display: flex; flex: 1; min-height: 0; }
   #sidebar {
     width: 340px; min-width: 340px; background: white; border-right: 1px solid var(--border);
     display: flex; flex-direction: column; overflow: hidden;
@@ -99,14 +104,12 @@
   .product-row input { flex: 1; }
   .product-row button { border: none; background: #eee; border-radius: 6px; cursor: pointer; padding: 0 10px; }
 
-  #feedbackBtn, #featureRequestBtn {
-    position: fixed; right: 20px; z-index: 800;
-    border: none; border-radius: 999px;
+  #featureRequestBtn {
+    position: fixed; right: 20px; bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 800;
+    border: none; border-radius: 999px; background: var(--yellow); color: #2b2b26;
     padding: 12px 18px; font-size: 14px; font-weight: 600; cursor: pointer;
     box-shadow: 0 2px 8px rgba(0,0,0,0.3);
   }
-  #feedbackBtn { bottom: 20px; background: var(--green); color: white; }
-  #featureRequestBtn { bottom: 72px; background: var(--yellow); color: #2b2b26; }
 
   #infoBtn {
     background: none; border: 1px solid rgba(255,255,255,0.5); color: white;
@@ -147,7 +150,7 @@
   .map-pin span { transform: rotate(45deg); font-size: 15px; }
 
   #placementBanner {
-    display: none; position: fixed; top: 64px; left: 50%; transform: translateX(-50%);
+    display: none; position: fixed; top: calc(64px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
     background: var(--green); color: white; padding: 8px 16px; border-radius: 999px; z-index: 900; font-size: 13px;
   }
   #placementBanner.open { display: block; }
@@ -168,7 +171,7 @@
     <button id="infoBtn" title="Was ist Der Gelbe Baum?">i</button>
   </div>
   <div style="display:flex; gap:8px; align-items:center;">
-    <button id="toggleSidebarBtn" class="primary" style="display:none; background:white;">☰ Liste</button>
+    <button id="toggleSidebarBtn" class="primary" style="display:none; background:white;">☰ Menü</button>
     <button id="recipeBtn" class="primary" style="background:white;">🍳 Rezept-Planer</button>
     <button id="addBtn" class="primary">＋ Bodenschatz melden</button>
   </div>
@@ -287,15 +290,14 @@
 </div>
 
 <button id="featureRequestBtn">💡 Was fehlt dir?</button>
-<button id="feedbackBtn">💬 Feedback</button>
 
-<!-- Feedback / Funktionswunsch -->
+<!-- Funktionswunsch -->
 <div class="modal-overlay" id="feedbackModal">
   <div class="modal">
-    <h2 id="fb_title">💬 Feedback</h2>
-    <p class="hint" id="fb_hint">Verbesserungsvorschlag, Bug oder Idee – geht direkt an die Entwicklung.</p>
+    <h2 id="fb_title">💡 Welche Funktionen vermisst du?</h2>
+    <p class="hint" id="fb_hint">Was fehlt dir noch in der App? Jede Idee hilft uns weiter.</p>
     <label>Deine Nachricht</label>
-    <textarea id="fb_message" maxlength="5000" placeholder="Was ist dir aufgefallen?"></textarea>
+    <textarea id="fb_message" maxlength="5000" placeholder="z. B. eine Funktion für ..."></textarea>
     <label>Kontakt (optional, für Rückfragen)</label>
     <input type="text" id="fb_contact" placeholder="E-Mail oder Telefon">
     <div class="modal-actions">
@@ -311,7 +313,7 @@
     <h2>🌳 Was ist Der Gelbe Baum?</h2>
     <p>Der Gelbe Baum ist eine gemeinschaftliche Karte für alles, was deine Region an Obst, Gemüse, Honig und mehr zu bieten hat – von Streuobstwiesen und Pilzstellen bis zu Hofläden und Marktständen.</p>
     <p>Jeder kann Orte eintragen und Beschreibungen ergänzen, wie bei einem Wiki. So entsteht Schritt für Schritt eine Karte, die regionale, saisonale und oft kostenlose Quellen sichtbar macht und Direktvermarkter mit ihren Kunden verbindet.</p>
-    <p class="hint">Die App ist gerade in der Testphase – über die Buttons unten rechts kannst du uns jederzeit Feedback schicken oder sagen, welche Funktionen dir noch fehlen.</p>
+    <p class="hint"><strong>Das hier ist eine reine Testversion</strong> – Daten, Design und Funktionen können sich noch ändern. Über den Button unten rechts kannst du uns jederzeit sagen, welche Funktionen dir noch fehlen.</p>
     <div class="modal-actions">
       <button class="btn-save" id="infoClose" style="flex:none; padding:10px 24px; margin-left:auto;">Verstanden</button>
     </div>
@@ -795,7 +797,16 @@ document.getElementById('locateAndAddBtn').onclick = () => {
 };
 
 // -- Sidebar-Toggle mobil --
-document.getElementById('toggleSidebarBtn').onclick = () => document.getElementById('sidebar').classList.toggle('open');
+document.getElementById('toggleSidebarBtn').onclick = (e) => {
+  e.stopPropagation();
+  document.getElementById('sidebar').classList.toggle('open');
+};
+document.addEventListener('click', (e) => {
+  const sidebar = document.getElementById('sidebar');
+  if (!sidebar.classList.contains('open')) return;
+  if (sidebar.contains(e.target) || e.target.id === 'toggleSidebarBtn') return;
+  sidebar.classList.remove('open');
+});
 
 // -- Ort melden: Platzierungsmodus --
 const addBtn = document.getElementById('addBtn');
@@ -1293,41 +1304,31 @@ function openRecipeRoute(matches) {
   const origin = recipeOrigin();
   const originStr = `${origin.lat},${origin.lng}`;
   const destination = stops[stops.length - 1];
-  const waypoints = stops.slice(0, -1).map(p => `${p.lat},${p.lng}`).join('|');
+  const waypointStops = stops.slice(0, -1).map(p => `${p.lat},${p.lng}`);
 
   let url = `https://www.google.com/maps/dir/?api=1&origin=${originStr}&destination=${destination.lat},${destination.lng}`;
-  if (waypoints) url += `&waypoints=${encodeURIComponent(waypoints)}`;
+  if (waypointStops.length) {
+    // optimize:true lässt Google Maps die Reihenfolge der Stopps für die schnellste Route berechnen
+    url += `&waypoints=${encodeURIComponent('optimize:true|' + waypointStops.join('|'))}`;
+  }
   window.open(url, '_blank');
 }
 
-// -- Feedback / Funktionswunsch --
+// -- Funktionswunsch --
 const feedbackModal = document.getElementById('feedbackModal');
-let feedbackType = 'feedback';
 
-function openFeedback(type) {
-  feedbackType = type;
+document.getElementById('featureRequestBtn').onclick = () => {
   document.getElementById('fb_message').value = '';
   document.getElementById('fb_contact').value = '';
-  if (type === 'feature_request') {
-    document.getElementById('fb_title').textContent = '💡 Welche Funktionen vermisst du?';
-    document.getElementById('fb_hint').textContent = 'Was fehlt dir noch in der App? Jede Idee hilft uns weiter.';
-    document.getElementById('fb_message').placeholder = 'z. B. eine Funktion für ...';
-  } else {
-    document.getElementById('fb_title').textContent = '💬 Feedback';
-    document.getElementById('fb_hint').textContent = 'Verbesserungsvorschlag, Bug oder Idee – geht direkt an die Entwicklung.';
-    document.getElementById('fb_message').placeholder = 'Was ist dir aufgefallen?';
-  }
   feedbackModal.classList.add('open');
-}
-document.getElementById('feedbackBtn').onclick = () => openFeedback('feedback');
-document.getElementById('featureRequestBtn').onclick = () => openFeedback('feature_request');
+};
 document.getElementById('feedbackCancel').onclick = () => feedbackModal.classList.remove('open');
 document.getElementById('feedbackSend').onclick = async () => {
   const message = document.getElementById('fb_message').value.trim();
   if (!message) { alert('Bitte eine Nachricht eingeben.'); return; }
   const contact = document.getElementById('fb_contact').value.trim();
   try {
-    const res = await fetch(`${API}?action=feedback_send`, { method: 'POST', body: JSON.stringify({ message, contact, type: feedbackType }) });
+    const res = await fetch(`${API}?action=feedback_send`, { method: 'POST', body: JSON.stringify({ message, contact, type: 'feature_request' }) });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
     feedbackModal.classList.remove('open');
