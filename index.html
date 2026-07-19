@@ -183,9 +183,11 @@
     <label>Saison (optional)</label>
     <input type="text" id="f_season" placeholder="z. B. Juli–September">
 
-    <label>Öffnungszeiten</label>
-    <div class="checkline"><input type="checkbox" id="f_always_open"> <label style="margin:0;">Immer geöffnet</label></div>
-    <div id="hoursGrid"></div>
+    <div id="hoursSection" style="display:none;">
+      <label>Öffnungszeiten</label>
+      <div class="checkline"><input type="checkbox" id="f_always_open"> <label style="margin:0;">Immer geöffnet</label></div>
+      <div id="hoursGrid"></div>
+    </div>
 
     <label>Preis (optional)</label>
     <input type="text" id="f_price" placeholder="z. B. 2 €/kg, kostenlos, Spende">
@@ -194,9 +196,12 @@
     <div class="checkline"><input type="checkbox" id="f_honesty"> <label style="margin:0;">Kasse/Automat</label></div>
     <div class="checkline"><input type="checkbox" id="f_orderable"> <label style="margin:0;">Bestellfunktion verfügbar</label></div>
 
-    <div id="orderFields" style="display:none;">
-      <label>Kontakt-E-Mail für Bestellungen</label>
+    <div id="contactEmailField" style="display:none;">
+      <label>Kontakt-E-Mail (optional)</label>
       <input type="email" id="f_contact_email">
+    </div>
+
+    <div id="orderFields" style="display:none;">
       <label>Kontakt-Telefon (optional)</label>
       <input type="tel" id="f_contact_phone">
       <label>Produkte</label>
@@ -251,7 +256,6 @@ const CATS = {
   mushroom:       { label: 'Pilzfund',                      icon: '🍄', color: '#a0522d' },
   flowerfield:    { label: 'Blumenfeld',                    icon: '🌻', color: '#e6b800' },
   eggs:           { label: 'Eier',                          icon: '🥚', color: '#d9a441' },
-  milk:           { label: 'Milch',                         icon: '🥛', color: '#6fa8dc' },
   honey:          { label: 'Honig',                         icon: '🍯', color: '#d99a00' },
   farmshop:       { label: 'Hofladen',                      icon: '🏚️', color: '#9c6b30' },
   market:         { label: 'Marktstand (regelmäßig)',       icon: '🧺', color: '#2a9d8f' },
@@ -298,9 +302,6 @@ const SUBCATS = {
   ],
   eggs: [
     ['chicken', 'Hühnereier'], ['quail', 'Wachteleier'], ['duck', 'Enteneier'], ['goose', 'Gänseeier'], ['other', 'Sonstige'],
-  ],
-  milk: [
-    ['cow', 'Kuhmilch'], ['goat', 'Ziegenmilch'], ['sheep', 'Schafmilch'], ['other', 'Sonstige'],
   ],
   honey: [
     ['blossom', 'Blütenhonig'], ['forest', 'Waldhonig'], ['acacia', 'Akazienhonig'], ['linden', 'Lindenhonig'], ['other', 'Sonstiger Honig'],
@@ -397,7 +398,24 @@ function updateSubcatOptions(preselect = '') {
   subSelect.innerHTML = subs.map(([id, label]) => `<option value="${id}">${label}</option>`).join('');
   if (preselect) subSelect.value = preselect;
 }
-catSelect.onchange = () => updateSubcatOptions();
+
+const HOURS_CATEGORIES = ['farmshop', 'market'];
+
+function updateHoursVisibility() {
+  document.getElementById('hoursSection').style.display = HOURS_CATEGORIES.includes(catSelect.value) ? 'block' : 'none';
+}
+
+function updateContactEmailVisibility() {
+  const show = catSelect.value === 'farmshop' || document.getElementById('f_orderable').checked;
+  document.getElementById('contactEmailField').style.display = show ? 'block' : 'none';
+}
+
+function onCategoryChange() {
+  updateSubcatOptions();
+  updateHoursVisibility();
+  updateContactEmailVisibility();
+}
+catSelect.onchange = onCategoryChange;
 
 // -- Öffnungszeiten-Raster --
 const hoursGridEl = document.getElementById('hoursGrid');
@@ -632,7 +650,7 @@ function resetForm() {
   document.getElementById('f_photo').value = '';
   document.getElementById('photoStatus').textContent = '';
   uploadedPhotoPath = '';
-  updateSubcatOptions();
+  onCategoryChange();
   resetHours();
 }
 
@@ -650,6 +668,7 @@ document.getElementById('addProductRow').onclick = () => addProductRow();
 
 document.getElementById('f_orderable').onchange = (e) => {
   document.getElementById('orderFields').style.display = e.target.checked ? 'block' : 'none';
+  updateContactEmailVisibility();
 };
 
 function openForm(place, latlng) {
@@ -662,6 +681,7 @@ function openForm(place, latlng) {
     document.getElementById('f_name').value = place.name;
     document.getElementById('f_category').value = place.category;
     updateSubcatOptions(place.subcategory || '');
+    updateHoursVisibility();
     document.getElementById('f_access').value = place.access;
     document.getElementById('f_description').value = place.description || '';
     document.getElementById('f_season').value = place.season || '';
@@ -670,6 +690,7 @@ function openForm(place, latlng) {
     document.getElementById('f_honesty').checked = !!place.honesty_box;
     document.getElementById('f_orderable').checked = !!place.orderable;
     document.getElementById('orderFields').style.display = place.orderable ? 'block' : 'none';
+    updateContactEmailVisibility();
     document.getElementById('f_contact_email').value = place.contact_email || '';
     document.getElementById('f_contact_phone').value = place.contact_phone || '';
     uploadedPhotoPath = place.photo || '';

@@ -5,7 +5,7 @@ header('Content-Type: application/json; charset=utf-8');
 
 const CATEGORIES = [
     'fruittrees', 'nuts', 'herbs', 'berries', 'mushroom', 'flowerfield',
-    'eggs', 'milk', 'honey', 'farmshop', 'market',
+    'eggs', 'honey', 'farmshop', 'market',
     'homerestaurant', 'other',
 ];
 
@@ -19,7 +19,6 @@ const SUBCATEGORIES = [
     'flowerfield' => ['sunflower', 'tulip', 'dahlia', 'lavender', 'rose', 'peony', 'marigold', 'other'],
     'herbs' => ['wildgarlic', 'nettle', 'dandelion', 'groundelder', 'yarrow', 'plantain', 'sorrel', 'other'],
     'eggs' => ['chicken', 'quail', 'duck', 'goose', 'other'],
-    'milk' => ['cow', 'goat', 'sheep', 'other'],
     'honey' => ['blossom', 'forest', 'acacia', 'linden', 'other'],
     'homerestaurant' => ['international', 'italian', 'asian', 'german', 'vegetarian', 'other'],
 ];
