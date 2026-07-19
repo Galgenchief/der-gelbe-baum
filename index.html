@@ -93,11 +93,19 @@
   .product-row input { flex: 1; }
   .product-row button { border: none; background: #eee; border-radius: 6px; cursor: pointer; padding: 0 10px; }
 
-  #feedbackBtn {
-    position: fixed; bottom: 20px; right: 20px; z-index: 800;
-    background: var(--green); color: white; border: none; border-radius: 999px;
+  #feedbackBtn, #featureRequestBtn {
+    position: fixed; right: 20px; z-index: 800;
+    border: none; border-radius: 999px;
     padding: 12px 18px; font-size: 14px; font-weight: 600; cursor: pointer;
     box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  #feedbackBtn { bottom: 20px; background: var(--green); color: white; }
+  #featureRequestBtn { bottom: 72px; background: var(--yellow); color: #2b2b26; }
+
+  #infoBtn {
+    background: none; border: 1px solid rgba(255,255,255,0.5); color: white;
+    width: 30px; height: 30px; border-radius: 50%; font-weight: 700; font-size: 14px;
+    cursor: pointer; flex-shrink: 0;
   }
 
   .subcat-checks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
@@ -149,7 +157,10 @@
 <body>
 
 <header>
-  <h1>🌳 Der Gelbe Baum</h1>
+  <div style="display:flex; gap:10px; align-items:center;">
+    <h1>🌳 Der Gelbe Baum</h1>
+    <button id="infoBtn" title="Was ist Der Gelbe Baum?">i</button>
+  </div>
   <div style="display:flex; gap:8px; align-items:center;">
     <button id="toggleSidebarBtn" class="primary" style="display:none; background:white;">☰ Liste</button>
     <button id="recipeBtn" class="primary" style="background:white;">🍳 Rezept-Planer</button>
@@ -269,13 +280,14 @@
   <div class="modal" id="recipeContent" style="max-width:560px;"></div>
 </div>
 
+<button id="featureRequestBtn">💡 Was fehlt dir?</button>
 <button id="feedbackBtn">💬 Feedback</button>
 
-<!-- Feedback -->
+<!-- Feedback / Funktionswunsch -->
 <div class="modal-overlay" id="feedbackModal">
   <div class="modal">
-    <h2>💬 Feedback</h2>
-    <p class="hint">Verbesserungsvorschlag, Bug oder Idee – geht direkt an die Entwicklung.</p>
+    <h2 id="fb_title">💬 Feedback</h2>
+    <p class="hint" id="fb_hint">Verbesserungsvorschlag, Bug oder Idee – geht direkt an die Entwicklung.</p>
     <label>Deine Nachricht</label>
     <textarea id="fb_message" maxlength="5000" placeholder="Was ist dir aufgefallen?"></textarea>
     <label>Kontakt (optional, für Rückfragen)</label>
@@ -283,6 +295,19 @@
     <div class="modal-actions">
       <button class="btn-cancel" id="feedbackCancel">Abbrechen</button>
       <button class="btn-save" id="feedbackSend">Senden</button>
+    </div>
+  </div>
+</div>
+
+<!-- Info -->
+<div class="modal-overlay" id="infoModal">
+  <div class="modal">
+    <h2>🌳 Was ist Der Gelbe Baum?</h2>
+    <p>Der Gelbe Baum ist eine gemeinschaftliche Karte für alles, was deine Region an Obst, Gemüse, Honig und mehr zu bieten hat – von Streuobstwiesen und Pilzstellen bis zu Hofläden und Marktständen.</p>
+    <p>Jeder kann Orte eintragen und Beschreibungen ergänzen, wie bei einem Wiki. So entsteht Schritt für Schritt eine Karte, die regionale, saisonale und oft kostenlose Quellen sichtbar macht und Direktvermarkter mit ihren Kunden verbindet.</p>
+    <p class="hint">Die App ist gerade in der Testphase – über die Buttons unten rechts kannst du uns jederzeit Feedback schicken oder sagen, welche Funktionen dir noch fehlen.</p>
+    <div class="modal-actions">
+      <button class="btn-save" id="infoClose" style="flex:none; padding:10px 24px; margin-left:auto;">Verstanden</button>
     </div>
   </div>
 </div>
@@ -1269,20 +1294,34 @@ function openRecipeRoute(matches) {
   window.open(url, '_blank');
 }
 
-// -- Feedback --
+// -- Feedback / Funktionswunsch --
 const feedbackModal = document.getElementById('feedbackModal');
-document.getElementById('feedbackBtn').onclick = () => {
+let feedbackType = 'feedback';
+
+function openFeedback(type) {
+  feedbackType = type;
   document.getElementById('fb_message').value = '';
   document.getElementById('fb_contact').value = '';
+  if (type === 'feature_request') {
+    document.getElementById('fb_title').textContent = '💡 Welche Funktionen vermisst du?';
+    document.getElementById('fb_hint').textContent = 'Was fehlt dir noch in der App? Jede Idee hilft uns weiter.';
+    document.getElementById('fb_message').placeholder = 'z. B. eine Funktion für ...';
+  } else {
+    document.getElementById('fb_title').textContent = '💬 Feedback';
+    document.getElementById('fb_hint').textContent = 'Verbesserungsvorschlag, Bug oder Idee – geht direkt an die Entwicklung.';
+    document.getElementById('fb_message').placeholder = 'Was ist dir aufgefallen?';
+  }
   feedbackModal.classList.add('open');
-};
+}
+document.getElementById('feedbackBtn').onclick = () => openFeedback('feedback');
+document.getElementById('featureRequestBtn').onclick = () => openFeedback('feature_request');
 document.getElementById('feedbackCancel').onclick = () => feedbackModal.classList.remove('open');
 document.getElementById('feedbackSend').onclick = async () => {
   const message = document.getElementById('fb_message').value.trim();
   if (!message) { alert('Bitte eine Nachricht eingeben.'); return; }
   const contact = document.getElementById('fb_contact').value.trim();
   try {
-    const res = await fetch(`${API}?action=feedback_send`, { method: 'POST', body: JSON.stringify({ message, contact }) });
+    const res = await fetch(`${API}?action=feedback_send`, { method: 'POST', body: JSON.stringify({ message, contact, type: feedbackType }) });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
     feedbackModal.classList.remove('open');
@@ -1291,6 +1330,15 @@ document.getElementById('feedbackSend').onclick = async () => {
     alert('Fehler: ' + err.message);
   }
 };
+
+// -- Info --
+const infoModal = document.getElementById('infoModal');
+document.getElementById('infoBtn').onclick = () => infoModal.classList.add('open');
+document.getElementById('infoClose').onclick = () => infoModal.classList.remove('open');
+if (!localStorage.getItem('gb_seen_intro')) {
+  infoModal.classList.add('open');
+  localStorage.setItem('gb_seen_intro', '1');
+}
 
 // -- Start --
 loadPlaces();
