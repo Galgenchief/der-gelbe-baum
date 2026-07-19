@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS places (
   lng DECIMAL(10,7) NOT NULL,
   photo VARCHAR(255),
   owner_token CHAR(32) NOT NULL,
+  creator_player_id CHAR(36),
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -66,5 +67,13 @@ CREATE TABLE IF NOT EXISTS feedback (
   message TEXT NOT NULL,
   contact VARCHAR(255),
   type VARCHAR(20) NOT NULL DEFAULT 'feedback',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Gamification: anonymer Geräte-Code (kein Login) mit frei wählbarem Anzeigenamen,
+-- Punkte/Rang werden aus places.creator_player_id berechnet (5 Pkt privat, 10 Pkt öffentlich)
+CREATE TABLE IF NOT EXISTS players (
+  id CHAR(36) PRIMARY KEY,
+  display_name VARCHAR(30) NOT NULL DEFAULT 'Anonym',
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

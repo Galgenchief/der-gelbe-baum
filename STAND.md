@@ -78,6 +78,24 @@ Domain `dergelbebaum.de` kommt, sobald verfügbar).
 - "Route öffnen" nutzt dieselbe Google-Maps-Routing-Logik wie der Rezept-Planer (gemeinsame
   Funktion `openMapsRoute()`, kein Code-Duplikat), `optimize:true`, kein fester Startpunkt
 
+**Gamification / Rangliste** (neu)
+- Kein Login nötig: pro Browser wird einmalig ein anonymer Geräte-Code (`player_id`,
+  `crypto.randomUUID()`) in `localStorage` (`gb_player_id`) erzeugt und bei jeder neuen Meldung
+  serverseitig an den Ort gehängt (`places.creator_player_id`, neue Spalte). **Achtung:**
+  bindet Fortschritt ans Gerät/den Browser – Cache löschen oder neues Handy = Fortschritt weg
+  (gleiche Einschränkung wie beim bestehenden Lösch-Mechanismus über `owner_token`)
+- Punkte: 10 pro öffentlicher Meldung, 5 pro privater – serverseitig berechnet (`?action=ranking`,
+  `?action=player_stats`), nicht vom Client vorgegeben
+- 7 Abzeichen nach Anzahl Meldungen, heimische Früchte/Gemüse von klein nach groß (bewusst
+  keine exotischen Früchte wie im ursprünglichen Vorschlag): 🫐 Heidelbeere (1), 🍒 Kirsche (5),
+  🍑 Pfirsich (10), 🍎 Apfel (20), 🍐 Birne (50), 🌽 Mais (100), 🎃 Kürbis (200)
+- Frei wählbarer Anzeigename (`players`-Tabelle, verknüpft mit `player_id`), Top-50-Rangliste,
+  eigener Header-Button "🏆 Rangliste" mit eigenem Stand + Fortschritt bis zum nächsten Abzeichen
+- Kleine Erfolgs-Meldung (Alert) beim Freischalten eines neuen Abzeichens direkt nach dem Melden
+- **Bekannte Einschränkung, bewusst in Kauf genommen:** ohne echten Login ließe sich `player_id`
+  theoretisch fälschen/wiederverwenden – für ein spaßiges, unverbindliches Ranking (kein Geld/
+  keine echten Preise) akzeptabel, gleiches Vertrauensmodell wie beim Rest der Owner-Token-Logik
+
 **Sonstiges**
 - Info-Button (i) im Header erklärt Zweck der App, poppt beim ersten Besuch automatisch auf,
   weist auf Testphase hin

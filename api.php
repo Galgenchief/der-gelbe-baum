@@ -59,6 +59,10 @@ function ownerToken(): string {
     return bin2hex(random_bytes(16));
 }
 
+function validPlayerId(string $id): ?string {
+    return preg_match('/^[0-9a-f-]{36}$/i', $id) ? $id : null;
+}
+
 $action = $_GET['action'] ?? '';
 
 switch ($action) {
@@ -132,12 +136,13 @@ switch ($action) {
         $token = ownerToken();
         $subcategory = validSubcategories($category, (string)($in['subcategory'] ?? ''));
         $hours = validHours((string)($in['hours'] ?? ''));
+        $playerId = validPlayerId((string)($in['player_id'] ?? ''));
 
         $stmt = db()->prepare('
             INSERT INTO places
                 (name, category, subcategory, access, description, season, hours, price, free_harvest, honesty_box,
-                 orderable, contact_email, contact_phone, lat, lng, photo, owner_token)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 orderable, contact_email, contact_phone, lat, lng, photo, owner_token, creator_player_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ');
         $stmt->execute([
             $name,
@@ -157,6 +162,7 @@ switch ($action) {
             (float)$lng,
             (string)($in['photo'] ?? ''),
             $token,
+            $playerId,
         ]);
 
         $id = (int)db()->lastInsertId();
@@ -389,6 +395,62 @@ switch ($action) {
         @mail(FEEDBACK_TO, $subject, $body, 'From: ' . MAIL_FROM);
 
         respond(['ok' => true]);
+        break;
+
+    case 'player_set_name':
+        $in = jsonInput();
+        $playerId = validPlayerId((string)($in['player_id'] ?? ''));
+        if (!$playerId) fail('Ungültige Spieler-ID');
+        $displayName = trim(mb_substr((string)($in['display_name'] ?? ''), 0, 30));
+        if ($displayName === '') fail('Bitte einen Namen eingeben');
+
+        db()->prepare('INSERT INTO players (id, display_name) VALUES (?, ?)
+            ON DUPLICATE KEY UPDATE display_name = VALUES(display_name)')
+            ->execute([$playerId, $displayName]);
+
+        respond(['ok' => true]);
+        break;
+
+    case 'player_stats':
+        $playerId = validPlayerId((string)($_GET['player_id'] ?? ''));
+        if (!$playerId) fail('Ungültige Spieler-ID');
+
+        $stmt = db()->prepare("
+            SELECT COUNT(*) AS submissions, COALESCE(SUM(CASE WHEN access = 'public' THEN 10 ELSE 5 END), 0) AS points
+            FROM places WHERE creator_player_id = ?
+        ");
+        $stmt->execute([$playerId]);
+        $stats = $stmt->fetch();
+
+        $stmt = db()->prepare('SELECT display_name FROM players WHERE id = ?');
+        $stmt->execute([$playerId]);
+        $player = $stmt->fetch();
+
+        respond([
+            'submissions' => (int)$stats['submissions'],
+            'points' => (int)$stats['points'],
+            'display_name' => $player['display_name'] ?? null,
+        ]);
+        break;
+
+    case 'ranking':
+        $stmt = db()->query("
+            SELECT p.creator_player_id AS player_id, COALESCE(pl.display_name, 'Anonym') AS display_name,
+                   COUNT(*) AS submissions,
+                   SUM(CASE WHEN p.access = 'public' THEN 10 ELSE 5 END) AS points
+            FROM places p
+            LEFT JOIN players pl ON pl.id = p.creator_player_id
+            WHERE p.creator_player_id IS NOT NULL
+            GROUP BY p.creator_player_id, pl.display_name
+            ORDER BY points DESC
+            LIMIT 50
+        ");
+        $rows = $stmt->fetchAll();
+        foreach ($rows as &$row) {
+            $row['submissions'] = (int)$row['submissions'];
+            $row['points'] = (int)$row['points'];
+        }
+        respond($rows);
         break;
 
     default:

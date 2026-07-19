@@ -174,6 +174,7 @@
     <button id="toggleSidebarBtn" class="primary" style="display:none; background:white;">☰ Menü</button>
     <button id="recipeBtn" class="primary" style="background:white;">🍳 Rezept-Planer</button>
     <button id="basketBtn" class="primary" style="background:white;">🧺 Einkaufskorb<span id="basketCount"></span></button>
+    <button id="rankingBtn" class="primary" style="background:white;">🏆 Rangliste</button>
     <button id="addBtn" class="primary">＋ Bodenschatz melden</button>
   </div>
 </header>
@@ -293,6 +294,11 @@
 <!-- Einkaufskorb -->
 <div class="modal-overlay" id="basketModal">
   <div class="modal" id="basketContent" style="max-width:560px;"></div>
+</div>
+
+<!-- Rangliste -->
+<div class="modal-overlay" id="rankingModal">
+  <div class="modal" id="rankingContent" style="max-width:560px;"></div>
 </div>
 
 <button id="featureRequestBtn">💡 Was fehlt dir?</button>
@@ -1246,6 +1252,10 @@ function escapeHtml(str) {
   return d.innerHTML;
 }
 
+function escapeAttr(str) {
+  return escapeHtml(str).replace(/"/g, '&quot;');
+}
+
 // -- Standort --
 document.getElementById('locateBtn').onclick = () => {
   if (!navigator.geolocation) { alert('Standort wird von diesem Browser nicht unterstützt.'); return; }
@@ -1335,8 +1345,8 @@ function addProductRow(name = '', price = '') {
   const row = document.createElement('div');
   row.className = 'product-row';
   row.innerHTML = `
-    <input type="text" placeholder="Produkt" class="p_name" value="${escapeHtml(name)}">
-    <input type="text" placeholder="Preis" class="p_price" value="${escapeHtml(price)}" style="max-width:100px;">
+    <input type="text" placeholder="Produkt" class="p_name" value="${escapeAttr(name)}">
+    <input type="text" placeholder="Preis" class="p_price" value="${escapeAttr(price)}" style="max-width:100px;">
     <button type="button">✕</button>`;
   row.querySelector('button').onclick = () => row.remove();
   document.getElementById('productRows').appendChild(row);
@@ -1453,6 +1463,7 @@ document.getElementById('formSave').onclick = async () => {
     products,
     lat: pendingLatLng.lat,
     lng: pendingLatLng.lng,
+    player_id: playerId,
   };
 
   try {
@@ -1466,6 +1477,7 @@ document.getElementById('formSave').onclick = async () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       saveMyToken(data.id, data.owner_token);
+      checkNewBadge();
     }
     formModal.classList.remove('open');
     await loadPlaces();
@@ -1615,7 +1627,7 @@ function openOrderModal(p) {
   const box = document.getElementById('orderItemsBox');
   box.innerHTML = (p.products || []).map((pr, i) => `
     <div class="order-item-row">
-      <input type="checkbox" class="oi_check" data-name="${escapeHtml(pr.name)}">
+      <input type="checkbox" class="oi_check" data-name="${escapeAttr(pr.name)}">
       <span style="flex:1;">${escapeHtml(pr.name)} <span class="hint">${escapeHtml(pr.price)}</span></span>
       <input type="number" class="oi_qty" min="1" value="1">
     </div>`).join('') || '<div class="hint">Keine Produkte hinterlegt – bitte im Notizfeld beschreiben, was du möchtest.</div>';
@@ -1869,6 +1881,124 @@ function renderBasketList() {
   if (routeBtn) routeBtn.onclick = () => openMapsRoute(rows.map(r => r.b));
   const clearBtn = document.getElementById('basketClearBtn');
   if (clearBtn) clearBtn.onclick = () => { basket = []; saveBasket(); renderBasketList(); };
+}
+
+// -- Gamification: Punkte & Abzeichen --
+// Kein Login: ein pro Browser einmalig erzeugter, anonymer Geräte-Code (player_id) verknüpft
+// alle eigenen Meldungen serverseitig. Abzeichen nach Anzahl Meldungen, heimische Früchte/
+// Gemüse von klein nach groß (passend zu den Dingen, die man an den Ständen selbst findet).
+const BADGES = [
+  { min: 1,   icon: '🫐', label: 'Heidelbeere' },
+  { min: 5,   icon: '🍒', label: 'Kirsche' },
+  { min: 10,  icon: '🍑', label: 'Pfirsich' },
+  { min: 20,  icon: '🍎', label: 'Apfel' },
+  { min: 50,  icon: '🍐', label: 'Birne' },
+  { min: 100, icon: '🌽', label: 'Mais' },
+  { min: 200, icon: '🎃', label: 'Kürbis' },
+];
+function badgeForCount(submissions) {
+  let badge = null;
+  for (const b of BADGES) { if (submissions >= b.min) badge = b; }
+  return badge;
+}
+function nextBadge(submissions) {
+  return BADGES.find(b => b.min > submissions) || null;
+}
+
+function getPlayerId() {
+  let id = localStorage.getItem('gb_player_id');
+  if (!id) { id = crypto.randomUUID(); localStorage.setItem('gb_player_id', id); }
+  return id;
+}
+const playerId = getPlayerId();
+
+async function checkNewBadge() {
+  try {
+    const res = await fetch(`${API}?action=player_stats&player_id=${playerId}`);
+    const stats = await res.json();
+    if (!res.ok) return;
+    const lastCount = parseInt(localStorage.getItem('gb_last_badge_count') || '0', 10);
+    localStorage.setItem('gb_last_badge_count', String(stats.submissions));
+    const oldBadge = badgeForCount(lastCount);
+    const newBadge = badgeForCount(stats.submissions);
+    if (newBadge && newBadge !== oldBadge) {
+      alert(`${newBadge.icon} Neues Abzeichen freigeschaltet: ${newBadge.label}!\n(${stats.submissions} Meldungen, ${stats.points} Punkte)`);
+    }
+  } catch { /* Rangliste ist ein Bonus-Feature, Fehler hier sollen das Melden nicht stören */ }
+}
+
+const rankingModal = document.getElementById('rankingModal');
+document.getElementById('rankingBtn').onclick = openRanking;
+
+async function openRanking() {
+  document.getElementById('rankingContent').innerHTML = '<h2>🏆 Rangliste</h2><p class="hint">Lädt…</p>';
+  rankingModal.classList.add('open');
+  const [statsRes, rankingRes] = await Promise.all([
+    fetch(`${API}?action=player_stats&player_id=${playerId}`),
+    fetch(`${API}?action=ranking`),
+  ]);
+  const stats = await statsRes.json();
+  const ranking = await rankingRes.json();
+  renderRanking(statsRes.ok ? stats : null, rankingRes.ok ? ranking : []);
+}
+
+function renderRanking(stats, ranking) {
+  const myBadge = stats ? badgeForCount(stats.submissions) : null;
+  const upcoming = stats ? nextBadge(stats.submissions) : BADGES[0];
+
+  document.getElementById('rankingContent').innerHTML = `
+    <h2>🏆 Rangliste</h2>
+    <div style="background:#f7f2e3; border-radius:8px; padding:12px;">
+      <strong>Dein Stand</strong><br>
+      ${stats ? `
+        ${myBadge ? `${myBadge.icon} ${escapeHtml(myBadge.label)}` : 'Noch kein Abzeichen'} –
+        ${stats.points} Punkte, ${stats.submissions} Meldungen<br>
+        ${upcoming ? `<span class="hint">Noch ${upcoming.min - stats.submissions} bis ${upcoming.icon} ${escapeHtml(upcoming.label)}</span>` : '<span class="hint">Alle Abzeichen freigeschaltet!</span>'}
+      ` : '<span class="hint">Noch keine Meldung – leg los!</span>'}
+      <div style="margin-top:8px; display:flex; gap:6px;">
+        <input type="text" id="r_name" placeholder="Dein Anzeigename" value="${escapeAttr((stats && stats.display_name) || '')}" maxlength="30" style="flex:1; padding:6px; border:1px solid var(--border); border-radius:6px;">
+        <button id="r_name_save" style="background:#3a5a40; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">Speichern</button>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;">
+      <strong>Alle Abzeichen</strong>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
+        ${BADGES.map(b => `<div style="text-align:center; opacity:${stats && stats.submissions >= b.min ? '1' : '0.35'};">
+          <div style="font-size:24px;">${b.icon}</div>
+          <div style="font-size:11px;">${escapeHtml(b.label)}<br>${b.min}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+
+    <div style="margin-top:16px;">
+      <strong>Top 50</strong>
+      <div style="margin-top:8px;">
+        ${ranking.length ? ranking.map((row, i) => {
+          const b = badgeForCount(row.submissions);
+          const isMe = row.player_id === playerId;
+          return `<div class="recipe-row" style="${isMe ? 'background:#f7f2e3;' : ''}">
+            <span class="rname">${i + 1}. ${b ? b.icon : '·'} ${escapeHtml(row.display_name)}${isMe ? ' (du)' : ''}</span>
+            <span class="hint">${row.points} Punkte</span>
+          </div>`;
+        }).join('') : '<div class="hint" style="padding:12px 0;">Noch niemand in der Rangliste.</div>'}
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" id="rankingClose">Schließen</button>
+    </div>
+  `;
+
+  document.getElementById('rankingClose').onclick = () => rankingModal.classList.remove('open');
+  document.getElementById('r_name_save').onclick = async () => {
+    const display_name = document.getElementById('r_name').value.trim();
+    if (!display_name) { alert('Bitte einen Namen eingeben.'); return; }
+    const res = await fetch(`${API}?action=player_set_name`, { method: 'POST', body: JSON.stringify({ player_id: playerId, display_name }) });
+    const data = await res.json();
+    if (!res.ok) { alert('Fehler: ' + data.error); return; }
+    openRanking();
+  };
 }
 
 // -- Funktionswunsch --
