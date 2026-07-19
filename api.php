@@ -5,7 +5,7 @@ header('Content-Type: application/json; charset=utf-8');
 
 const CATEGORIES = [
     'fruittrees', 'nuts', 'herbs', 'berries', 'mushroom', 'flowerfield',
-    'eggs', 'milk', 'produce', 'honey', 'farmshop', 'market',
+    'eggs', 'milk', 'honey', 'farmshop', 'market',
     'homerestaurant', 'other',
 ];
 
@@ -14,6 +14,7 @@ const SUBCATEGORIES = [
     'berries' => ['raspberry', 'currant', 'gooseberry', 'blackberry', 'elderberry', 'blueberry', 'seabuckthorn', 'other'],
     'nuts' => ['walnut', 'hazelnut', 'chestnut', 'other'],
     'mushroom' => ['porcini', 'chanterelle', 'baybolete', 'champignon', 'parasol', 'other'],
+    'farmshop' => ['eggs', 'milk', 'yogurt', 'cheese', 'butter', 'cream', 'quark', 'icecream', 'meat', 'jam', 'juice', 'vegetables', 'other'],
 ];
 
 function validSubcategory(string $category, string $subcategory): string {

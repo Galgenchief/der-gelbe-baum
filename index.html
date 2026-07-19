@@ -180,8 +180,8 @@
     <input type="text" id="f_price" placeholder="z. B. 2 €/kg, kostenlos, Spende">
 
     <div class="checkline"><input type="checkbox" id="f_free"> <label style="margin:0;">Kostenlos (freie Ernte/Angebot)</label></div>
-    <div class="checkline"><input type="checkbox" id="f_honesty"> <label style="margin:0;">Ehrlichkeitskasse vorhanden</label></div>
-    <div class="checkline"><input type="checkbox" id="f_orderable"> <label style="margin:0;">Bestellfunktion anbieten</label></div>
+    <div class="checkline"><input type="checkbox" id="f_honesty"> <label style="margin:0;">Kasse/Automat</label></div>
+    <div class="checkline"><input type="checkbox" id="f_orderable"> <label style="margin:0;">Bestellfunktion verfügbar</label></div>
 
     <div id="orderFields" style="display:none;">
       <label>Kontakt-E-Mail für Bestellungen</label>
@@ -241,7 +241,6 @@ const CATS = {
   flowerfield:    { label: 'Blumenfeld',                    icon: '🌻', color: '#e6b800' },
   eggs:           { label: 'Eier',                          icon: '🥚', color: '#d9a441' },
   milk:           { label: 'Milch',                         icon: '🥛', color: '#6fa8dc' },
-  produce:        { label: 'Obst & Gemüse',                 icon: '🥕', color: '#e07b39' },
   honey:          { label: 'Honig',                         icon: '🍯', color: '#d99a00' },
   farmshop:       { label: 'Hofladen',                      icon: '🏚️', color: '#9c6b30' },
   market:         { label: 'Marktstand (regelmäßig)',       icon: '🧺', color: '#2a9d8f' },
@@ -267,6 +266,11 @@ const SUBCATS = {
   mushroom: [
     ['porcini', 'Steinpilz'], ['chanterelle', 'Pfifferling'], ['baybolete', 'Maronenröhrling'],
     ['champignon', 'Champignon'], ['parasol', 'Parasol'], ['other', 'Sonstige Art'],
+  ],
+  farmshop: [
+    ['eggs', 'Eier'], ['milk', 'Milch'], ['yogurt', 'Joghurt'], ['cheese', 'Käse'], ['butter', 'Butter'],
+    ['cream', 'Sahne'], ['quark', 'Quark'], ['icecream', 'Eis'], ['meat', 'Wurst & Fleisch'],
+    ['jam', 'Marmelade'], ['juice', 'Saft'], ['vegetables', 'Kartoffeln & Gemüse'], ['other', 'Sonstiges'],
   ],
 };
 
@@ -676,7 +680,7 @@ function renderDetail(p) {
     ${p.season ? `<div><strong>Saison / Öffnungszeiten:</strong> ${escapeHtml(p.season)}</div>` : ''}
     ${p.price ? `<div><strong>Preis:</strong> ${escapeHtml(p.price)}</div>` : ''}
     ${p.free_harvest ? '<div>✅ Kostenlos</div>' : ''}
-    ${p.honesty_box ? '<div>💶 Ehrlichkeitskasse vorhanden</div>' : ''}
+    ${p.honesty_box ? '<div>💶 Kasse/Automat vorhanden</div>' : ''}
     ${productsHtml}
     ${p.orderable ? `<button id="orderBtn" style="margin-top:12px; width:100%; padding:10px; background:#3a5a40; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600;">🛒 Bestellanfrage senden</button>` : ''}
 
