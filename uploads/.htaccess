@@ -1,0 +1,4 @@
+# Verhindert, dass hochgeladene Dateien als PHP ausgeführt werden können
+<FilesMatch "\.(php|phtml|php\d)$">
+  Require all denied
+</FilesMatch>

@@ -1,0 +1,60 @@
+-- Der Gelbe Baum – Datenbankschema
+-- Einmalig in phpMyAdmin ausführen (Reiter "SQL", einfügen, "OK")
+
+CREATE TABLE IF NOT EXISTS places (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  category VARCHAR(30) NOT NULL,
+  access ENUM('public','private') NOT NULL DEFAULT 'private',
+  description TEXT,
+  season VARCHAR(255),
+  price VARCHAR(255),
+  free_harvest TINYINT(1) NOT NULL DEFAULT 0,
+  honesty_box TINYINT(1) NOT NULL DEFAULT 0,
+  orderable TINYINT(1) NOT NULL DEFAULT 0,
+  contact_email VARCHAR(255),
+  contact_phone VARCHAR(255),
+  lat DECIMAL(10,7) NOT NULL,
+  lng DECIMAL(10,7) NOT NULL,
+  photo VARCHAR(255),
+  owner_token CHAR(32) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS ratings (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  place_id INT NOT NULL,
+  stars TINYINT NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (place_id) REFERENCES places(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS comments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  place_id INT NOT NULL,
+  author VARCHAR(100) NOT NULL DEFAULT 'Anonym',
+  text TEXT NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (place_id) REFERENCES places(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS products (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  place_id INT NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  price VARCHAR(50),
+  FOREIGN KEY (place_id) REFERENCES places(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS orders (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  place_id INT NOT NULL,
+  customer_name VARCHAR(255) NOT NULL,
+  customer_contact VARCHAR(255) NOT NULL,
+  items TEXT NOT NULL,
+  note TEXT,
+  status ENUM('neu','bestaetigt','abgeholt','storniert') NOT NULL DEFAULT 'neu',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (place_id) REFERENCES places(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

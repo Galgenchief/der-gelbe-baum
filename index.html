@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Der Gelbe Baum</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  :root {
+    --yellow: #e0a800;
+    --yellow-dark: #b8860b;
+    --green: #3a5a40;
+    --bg: #f7f5f0;
+    --border: #ddd6c8;
+    --text: #2b2b26;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: var(--text); background: var(--bg); }
+
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 16px; background: var(--green); color: white; gap: 10px; flex-wrap: wrap;
+  }
+  header h1 { font-size: 18px; margin: 0; display: flex; align-items: center; gap: 8px; }
+  header button.primary {
+    background: var(--yellow); color: #2b2b26; border: none; padding: 10px 16px;
+    border-radius: var(--radius); font-weight: 600; cursor: pointer; font-size: 14px;
+  }
+  header button.primary:active { background: var(--yellow-dark); }
+  header button.primary.cancel { background: #c1443c; color: white; }
+
+  #layout { display: flex; height: calc(100vh - 56px); }
+  #sidebar {
+    width: 340px; min-width: 340px; background: white; border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  #searchBox { padding: 10px; border-bottom: 1px solid var(--border); }
+  #searchBox input {
+    width: 100%; padding: 9px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 14px;
+  }
+  #filters { padding: 8px 10px; border-bottom: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    border: 1px solid var(--border); border-radius: 999px; padding: 5px 10px; font-size: 12px;
+    cursor: pointer; background: white; user-select: none; white-space: nowrap;
+  }
+  .chip.active { background: var(--yellow); border-color: var(--yellow-dark); }
+  #accessToggle { display: flex; gap: 6px; padding: 0 10px 8px; }
+  #accessToggle .chip { flex: 1; text-align: center; }
+  #locateBtn { margin: 8px 10px; padding: 9px; border-radius: var(--radius); border: 1px solid var(--border); background: white; cursor: pointer; font-size: 13px; }
+
+  #placeList { flex: 1; overflow-y: auto; }
+  .place-item { padding: 10px 14px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; gap: 10px; align-items: flex-start; }
+  .place-item:hover { background: #faf7ee; }
+  .place-item .icon { font-size: 22px; }
+  .place-item .name { font-weight: 600; font-size: 14px; }
+  .place-item .meta { font-size: 12px; color: #777; margin-top: 2px; }
+  .badge { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 999px; margin-left: 4px; }
+  .badge.public { background: #d7ecd9; color: #2f6b34; }
+  .badge.private { background: #f0e2c8; color: #8a6a1f; }
+
+  #map { flex: 1; }
+
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    align-items: center; justify-content: center; z-index: 1000; padding: 16px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: white; border-radius: var(--radius); max-width: 480px; width: 100%;
+    max-height: 90vh; overflow-y: auto; padding: 20px;
+  }
+  .modal h2 { margin-top: 0; font-size: 18px; }
+  .modal label { display: block; font-size: 13px; font-weight: 600; margin: 12px 0 4px; }
+  .modal input[type=text], .modal input[type=email], .modal input[type=tel],
+  .modal select, .modal textarea {
+    width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit;
+  }
+  .modal textarea { min-height: 70px; resize: vertical; }
+  .checkline { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 13px; }
+  .checkline input { width: auto; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 18px; }
+  .modal-actions button {
+    flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; font-size: 14px;
+  }
+  .btn-save { background: var(--yellow); }
+  .btn-cancel { background: #eee; }
+  .btn-danger { background: #c1443c; color: white; }
+  .hint { font-size: 12px; color: #888; margin-top: 4px; }
+
+  .product-row { display: flex; gap: 6px; margin-top: 6px; }
+  .product-row input { flex: 1; }
+  .product-row button { border: none; background: #eee; border-radius: 6px; cursor: pointer; padding: 0 10px; }
+
+  #detailPhoto { width: 100%; border-radius: 8px; margin-top: 10px; max-height: 220px; object-fit: cover; }
+  .stars { font-size: 20px; cursor: pointer; letter-spacing: 2px; }
+  .comment { border-top: 1px solid #eee; padding: 8px 0; font-size: 13px; }
+  .comment .author { font-weight: 600; }
+  .order-item-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 13px; }
+  .order-item-row input[type=number] { width: 60px; }
+
+  .leaflet-div-icon { background: transparent; border: none; }
+  .map-pin {
+    width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
+    display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    border: 2px solid white;
+  }
+  .map-pin span { transform: rotate(45deg); font-size: 15px; }
+
+  #placementBanner {
+    display: none; position: fixed; top: 64px; left: 50%; transform: translateX(-50%);
+    background: var(--green); color: white; padding: 8px 16px; border-radius: 999px; z-index: 900; font-size: 13px;
+  }
+  #placementBanner.open { display: block; }
+
+  @media (max-width: 760px) {
+    #sidebar { position: fixed; inset: 56px 0 0 0; width: 100%; min-width: 0; z-index: 500; transform: translateX(-100%); transition: transform .2s; }
+    #sidebar.open { transform: translateX(0); }
+    #layout { position: relative; }
+    #toggleSidebarBtn { display: inline-block !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🌳 Der Gelbe Baum</h1>
+  <div style="display:flex; gap:8px; align-items:center;">
+    <button id="toggleSidebarBtn" class="primary" style="display:none; background:white;">☰ Liste</button>
+    <button id="addBtn" class="primary">＋ Ort melden</button>
+  </div>
+</header>
+
+<div id="placementBanner">📍 Tippe auf die Karte, um den Ort zu setzen &nbsp; <a href="#" id="cancelPlacement" style="color:#ffe9a8;">Abbrechen</a></div>
+
+<div id="layout">
+  <div id="sidebar">
+    <div id="searchBox"><input type="text" id="searchInput" placeholder="Suchen (Name, Beschreibung)…"></div>
+    <div id="accessToggle">
+      <div class="chip active" data-access="all">Alle</div>
+      <div class="chip" data-access="public">🌍 Öffentlich</div>
+      <div class="chip" data-access="private">🔒 Privat</div>
+    </div>
+    <div id="filters"></div>
+    <button id="locateBtn">📍 Meinen Standort verwenden</button>
+    <div id="placeList"></div>
+  </div>
+  <div id="map"></div>
+</div>
+
+<!-- Formular: Ort anlegen / bearbeiten -->
+<div class="modal-overlay" id="formModal">
+  <div class="modal">
+    <h2 id="formTitle">Neuen Ort melden</h2>
+    <label>Name</label>
+    <input type="text" id="f_name" maxlength="255">
+
+    <label>Kategorie</label>
+    <select id="f_category"></select>
+
+    <label>Zugang</label>
+    <select id="f_access">
+      <option value="public">🌍 Öffentlich zugänglich</option>
+      <option value="private">🔒 Privat / Anbieter</option>
+    </select>
+
+    <label>Beschreibung</label>
+    <textarea id="f_description" maxlength="2000"></textarea>
+
+    <label>Saison / Öffnungszeiten (optional)</label>
+    <input type="text" id="f_season" placeholder="z. B. Juli–September, Mi & Sa 14–18 Uhr">
+
+    <label>Preis (optional)</label>
+    <input type="text" id="f_price" placeholder="z. B. 2 €/kg, kostenlos, Spende">
+
+    <div class="checkline"><input type="checkbox" id="f_free"> <label style="margin:0;">Kostenlos (freie Ernte/Angebot)</label></div>
+    <div class="checkline"><input type="checkbox" id="f_honesty"> <label style="margin:0;">Ehrlichkeitskasse vorhanden</label></div>
+    <div class="checkline"><input type="checkbox" id="f_orderable"> <label style="margin:0;">Bestellfunktion anbieten</label></div>
+
+    <div id="orderFields" style="display:none;">
+      <label>Kontakt-E-Mail für Bestellungen</label>
+      <input type="email" id="f_contact_email">
+      <label>Kontakt-Telefon (optional)</label>
+      <input type="tel" id="f_contact_phone">
+      <label>Produkte</label>
+      <div id="productRows"></div>
+      <button type="button" id="addProductRow" style="margin-top:8px; border:none; background:#eee; border-radius:6px; padding:6px 10px; cursor:pointer; font-size:12px;">+ Produkt hinzufügen</button>
+    </div>
+
+    <label>Foto (optional)</label>
+    <input type="file" id="f_photo" accept="image/*">
+    <div class="hint" id="photoStatus"></div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" id="formCancel">Abbrechen</button>
+      <button class="btn-save" id="formSave">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Detailansicht -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal" id="detailContent"></div>
+</div>
+
+<!-- Bestellformular -->
+<div class="modal-overlay" id="orderModal">
+  <div class="modal">
+    <h2>Bestellanfrage</h2>
+    <p class="hint">Zahlung und Abholung werden direkt mit dem Anbieter vor Ort geklärt.</p>
+    <div id="orderItemsBox"></div>
+    <label>Dein Name</label>
+    <input type="text" id="o_name">
+    <label>Kontakt (E-Mail oder Telefon)</label>
+    <input type="text" id="o_contact">
+    <label>Notiz (optional)</label>
+    <textarea id="o_note"></textarea>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="orderCancel">Abbrechen</button>
+      <button class="btn-save" id="orderSend">Anfrage senden</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const API = 'api.php';
+
+const CATS = {
+  wildfruit:      { label: 'Wildobst / öffentlicher Baum', icon: '🌳', color: '#6b8e23' },
+  nuts:           { label: 'Nüsse',                        icon: '🌰', color: '#8b5a2b' },
+  herbs:          { label: 'Wildkräuter',                  icon: '🌿', color: '#4a7c3c' },
+  berries:        { label: 'Beerensträucher',               icon: '🫐', color: '#6a3d9a' },
+  mushroom:       { label: 'Pilzfund',                      icon: '🍄', color: '#a0522d' },
+  flowerfield:    { label: 'Blumenfeld',                    icon: '🌻', color: '#e6b800' },
+  eggs:           { label: 'Eier',                          icon: '🥚', color: '#d9a441' },
+  milk:           { label: 'Milch',                         icon: '🥛', color: '#6fa8dc' },
+  produce:        { label: 'Obst & Gemüse',                 icon: '🥕', color: '#e07b39' },
+  honey:          { label: 'Honig',                         icon: '🍯', color: '#d99a00' },
+  farmshop:       { label: 'Hofladen',                      icon: '🏚️', color: '#9c6b30' },
+  market:         { label: 'Marktstand (regelmäßig)',       icon: '🧺', color: '#2a9d8f' },
+  homerestaurant: { label: 'Home Restaurant',                icon: '🍽️', color: '#c1443c' },
+  other:          { label: 'Sonstiges',                     icon: '📍', color: '#777777' },
+};
+
+// -- State --
+let places = [];
+let markers = {};
+let activeCategories = new Set(Object.keys(CATS));
+let accessFilter = 'all';
+let userLatLng = null;
+let placementMode = false;
+let editingId = null;
+let uploadedPhotoPath = '';
+let currentDetailPlace = null;
+
+// -- Eigentümer-Codes lokal merken (Wiki-Bearbeitung ist offen, Löschen/Bestellungen nur für Ersteller) --
+function myTokens() {
+  try { return JSON.parse(localStorage.getItem('gb_tokens') || '{}'); } catch { return {}; }
+}
+function saveMyToken(placeId, token) {
+  const t = myTokens();
+  t[placeId] = token;
+  localStorage.setItem('gb_tokens', JSON.stringify(t));
+}
+
+// -- Karte --
+const map = L.map('map').setView([49.45, 11.08], 11); // Raum Nürnberg
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap-Mitwirkende',
+  maxZoom: 19,
+}).addTo(map);
+
+function pinIcon(catKey) {
+  const cat = CATS[catKey] || CATS.other;
+  return L.divIcon({
+    className: '',
+    html: `<div class="map-pin" style="background:${cat.color}"><span>${cat.icon}</span></div>`,
+    iconSize: [30, 30],
+    iconAnchor: [15, 30],
+    popupAnchor: [0, -28],
+  });
+}
+
+// -- Filter-Chips aufbauen --
+const filtersEl = document.getElementById('filters');
+Object.entries(CATS).forEach(([key, cat]) => {
+  const chip = document.createElement('div');
+  chip.className = 'chip active';
+  chip.textContent = `${cat.icon} ${cat.label}`;
+  chip.dataset.cat = key;
+  chip.onclick = () => {
+    if (activeCategories.has(key)) { activeCategories.delete(key); chip.classList.remove('active'); }
+    else { activeCategories.add(key); chip.classList.add('active'); }
+    render();
+  };
+  filtersEl.appendChild(chip);
+});
+
+document.querySelectorAll('#accessToggle .chip').forEach(chip => {
+  chip.onclick = () => {
+    document.querySelectorAll('#accessToggle .chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    accessFilter = chip.dataset.access;
+    render();
+  };
+});
+
+document.getElementById('searchInput').oninput = render;
+
+// -- Kategorie-Select im Formular füllen --
+const catSelect = document.getElementById('f_category');
+Object.entries(CATS).forEach(([key, cat]) => {
+  const opt = document.createElement('option');
+  opt.value = key;
+  opt.textContent = `${cat.icon} ${cat.label}`;
+  catSelect.appendChild(opt);
+});
+
+// -- Daten laden --
+async function loadPlaces() {
+  const res = await fetch(`${API}?action=list`);
+  places = await res.json();
+  render();
+}
+
+function distanceKm(a, b) {
+  if (!a || !b) return null;
+  const R = 6371;
+  const dLat = (b.lat - a.lat) * Math.PI / 180;
+  const dLng = (b.lng - a.lng) * Math.PI / 180;
+  const x = Math.sin(dLat/2)**2 + Math.cos(a.lat*Math.PI/180) * Math.cos(b.lat*Math.PI/180) * Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
+}
+
+function render() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+
+  let filtered = places.filter(p =>
+    activeCategories.has(p.category) &&
+    (accessFilter === 'all' || p.access === accessFilter) &&
+    (!q || p.name.toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q))
+  );
+
+  if (userLatLng) {
+    filtered.forEach(p => p._dist = distanceKm(userLatLng, p));
+    filtered.sort((a, b) => a._dist - b._dist);
+  }
+
+  // Marker synchronisieren
+  Object.values(markers).forEach(m => map.removeLayer(m));
+  markers = {};
+  filtered.forEach(p => {
+    const marker = L.marker([p.lat, p.lng], { icon: pinIcon(p.category) }).addTo(map);
+    marker.bindPopup(popupHtml(p));
+    marker.on('popupopen', () => {
+      const btn = document.getElementById(`detailBtn-${p.id}`);
+      if (btn) btn.onclick = () => openDetail(p.id);
+    });
+    markers[p.id] = marker;
+  });
+
+  // Liste
+  const listEl = document.getElementById('placeList');
+  listEl.innerHTML = '';
+  if (!filtered.length) {
+    listEl.innerHTML = '<div style="padding:16px; color:#888; font-size:13px;">Keine Orte gefunden.</div>';
+  }
+  filtered.forEach(p => {
+    const cat = CATS[p.category] || CATS.other;
+    const div = document.createElement('div');
+    div.className = 'place-item';
+    div.innerHTML = `
+      <div class="icon">${cat.icon}</div>
+      <div>
+        <div class="name">${escapeHtml(p.name)}
+          <span class="badge ${p.access}">${p.access === 'public' ? '🌍' : '🔒'}</span>
+        </div>
+        <div class="meta">${cat.label}${p._dist != null ? ' · ' + p._dist.toFixed(1) + ' km' : ''}${p.avg_rating > 0 ? ' · ⭐ ' + p.avg_rating : ''}</div>
+      </div>`;
+    div.onclick = () => { openDetail(p.id); map.setView([p.lat, p.lng], 15); };
+    listEl.appendChild(div);
+  });
+}
+
+function popupHtml(p) {
+  const cat = CATS[p.category] || CATS.other;
+  return `<div style="min-width:160px;">
+    <strong>${cat.icon} ${escapeHtml(p.name)}</strong><br>
+    <span style="font-size:12px; color:#777;">${cat.label}</span><br>
+    <button id="detailBtn-${p.id}" style="margin-top:8px; background:#e0a800; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:12px;">Details ansehen</button>
+  </div>`;
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str || '';
+  return d.innerHTML;
+}
+
+// -- Standort --
+document.getElementById('locateBtn').onclick = () => {
+  if (!navigator.geolocation) { alert('Standort wird von diesem Browser nicht unterstützt.'); return; }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      userLatLng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      map.setView([userLatLng.lat, userLatLng.lng], 13);
+      render();
+    },
+    () => alert('Standort konnte nicht ermittelt werden. Bitte Standortfreigabe im Browser erlauben.')
+  );
+};
+
+// -- Sidebar-Toggle mobil --
+document.getElementById('toggleSidebarBtn').onclick = () => document.getElementById('sidebar').classList.toggle('open');
+
+// -- Ort melden: Platzierungsmodus --
+const addBtn = document.getElementById('addBtn');
+const banner = document.getElementById('placementBanner');
+addBtn.onclick = () => {
+  placementMode = true;
+  banner.classList.add('open');
+  addBtn.textContent = '✕ Abbrechen';
+  addBtn.classList.add('cancel');
+};
+function exitPlacementMode() {
+  placementMode = false;
+  banner.classList.remove('open');
+  addBtn.textContent = '＋ Ort melden';
+  addBtn.classList.remove('cancel');
+}
+document.getElementById('cancelPlacement').onclick = (e) => { e.preventDefault(); exitPlacementMode(); };
+
+map.on('click', (e) => {
+  if (!placementMode) return;
+  exitPlacementMode();
+  openForm(null, e.latlng);
+});
+
+// -- Formular: Anlegen / Bearbeiten --
+const formModal = document.getElementById('formModal');
+let pendingLatLng = null;
+
+function resetForm() {
+  document.getElementById('f_name').value = '';
+  document.getElementById('f_category').value = 'other';
+  document.getElementById('f_access').value = 'private';
+  document.getElementById('f_description').value = '';
+  document.getElementById('f_season').value = '';
+  document.getElementById('f_price').value = '';
+  document.getElementById('f_free').checked = false;
+  document.getElementById('f_honesty').checked = false;
+  document.getElementById('f_orderable').checked = false;
+  document.getElementById('f_contact_email').value = '';
+  document.getElementById('f_contact_phone').value = '';
+  document.getElementById('orderFields').style.display = 'none';
+  document.getElementById('productRows').innerHTML = '';
+  document.getElementById('f_photo').value = '';
+  document.getElementById('photoStatus').textContent = '';
+  uploadedPhotoPath = '';
+}
+
+function addProductRow(name = '', price = '') {
+  const row = document.createElement('div');
+  row.className = 'product-row';
+  row.innerHTML = `
+    <input type="text" placeholder="Produkt" class="p_name" value="${escapeHtml(name)}">
+    <input type="text" placeholder="Preis" class="p_price" value="${escapeHtml(price)}" style="max-width:100px;">
+    <button type="button">✕</button>`;
+  row.querySelector('button').onclick = () => row.remove();
+  document.getElementById('productRows').appendChild(row);
+}
+document.getElementById('addProductRow').onclick = () => addProductRow();
+
+document.getElementById('f_orderable').onchange = (e) => {
+  document.getElementById('orderFields').style.display = e.target.checked ? 'block' : 'none';
+};
+
+function openForm(place, latlng) {
+  resetForm();
+  editingId = place ? place.id : null;
+  pendingLatLng = latlng || (place ? { lat: place.lat, lng: place.lng } : null);
+  document.getElementById('formTitle').textContent = place ? 'Ort bearbeiten' : 'Neuen Ort melden';
+
+  if (place) {
+    document.getElementById('f_name').value = place.name;
+    document.getElementById('f_category').value = place.category;
+    document.getElementById('f_access').value = place.access;
+    document.getElementById('f_description').value = place.description || '';
+    document.getElementById('f_season').value = place.season || '';
+    document.getElementById('f_price').value = place.price || '';
+    document.getElementById('f_free').checked = !!place.free_harvest;
+    document.getElementById('f_honesty').checked = !!place.honesty_box;
+    document.getElementById('f_orderable').checked = !!place.orderable;
+    document.getElementById('orderFields').style.display = place.orderable ? 'block' : 'none';
+    document.getElementById('f_contact_email').value = place.contact_email || '';
+    document.getElementById('f_contact_phone').value = place.contact_phone || '';
+    uploadedPhotoPath = place.photo || '';
+    (place.products || []).forEach(p => addProductRow(p.name, p.price));
+  }
+
+  formModal.classList.add('open');
+}
+document.getElementById('formCancel').onclick = () => formModal.classList.remove('open');
+
+// Foto: client-seitig verkleinern, dann hochladen
+document.getElementById('f_photo').onchange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const statusEl = document.getElementById('photoStatus');
+  statusEl.textContent = 'Foto wird verarbeitet…';
+
+  const resizedBlob = await resizeImage(file, 1280, 0.75);
+  const form = new FormData();
+  form.append('photo', resizedBlob, 'photo.jpg');
+
+  try {
+    const res = await fetch(`${API}?action=upload_photo`, { method: 'POST', body: form });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Fehler beim Hochladen');
+    uploadedPhotoPath = data.photo;
+    statusEl.textContent = '✓ Foto hochgeladen';
+  } catch (err) {
+    statusEl.textContent = '✗ ' + err.message;
+  }
+};
+
+function resizeImage(file, maxDim, quality) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = (e) => { img.src = e.target.result; };
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > maxDim || height > maxDim) {
+        if (width > height) { height = Math.round(height * maxDim / width); width = maxDim; }
+        else { width = Math.round(width * maxDim / height); height = maxDim; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      canvas.toBlob(resolve, 'image/jpeg', quality);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+document.getElementById('formSave').onclick = async () => {
+  const name = document.getElementById('f_name').value.trim();
+  if (!name) { alert('Bitte einen Namen eingeben.'); return; }
+  if (!pendingLatLng) { alert('Bitte einen Ort auf der Karte wählen.'); return; }
+
+  const orderable = document.getElementById('f_orderable').checked;
+  const contactEmail = document.getElementById('f_contact_email').value.trim();
+  if (orderable && !contactEmail) { alert('Für die Bestellfunktion wird eine Kontakt-E-Mail benötigt.'); return; }
+
+  const products = [...document.querySelectorAll('#productRows .product-row')].map(row => ({
+    name: row.querySelector('.p_name').value.trim(),
+    price: row.querySelector('.p_price').value.trim(),
+  })).filter(p => p.name);
+
+  const payload = {
+    name,
+    category: document.getElementById('f_category').value,
+    access: document.getElementById('f_access').value,
+    description: document.getElementById('f_description').value.trim(),
+    season: document.getElementById('f_season').value.trim(),
+    price: document.getElementById('f_price').value.trim(),
+    free_harvest: document.getElementById('f_free').checked,
+    honesty_box: document.getElementById('f_honesty').checked,
+    orderable,
+    contact_email: contactEmail,
+    contact_phone: document.getElementById('f_contact_phone').value.trim(),
+    photo: uploadedPhotoPath,
+    products,
+    lat: pendingLatLng.lat,
+    lng: pendingLatLng.lng,
+  };
+
+  try {
+    if (editingId) {
+      payload.id = editingId;
+      const res = await fetch(`${API}?action=update`, { method: 'POST', body: JSON.stringify(payload) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+    } else {
+      const res = await fetch(`${API}?action=create`, { method: 'POST', body: JSON.stringify(payload) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      saveMyToken(data.id, data.owner_token);
+    }
+    formModal.classList.remove('open');
+    await loadPlaces();
+  } catch (err) {
+    alert('Fehler: ' + err.message);
+  }
+};
+
+// -- Detailansicht --
+async function openDetail(id) {
+  const res = await fetch(`${API}?action=get&id=${id}`);
+  const place = await res.json();
+  if (!res.ok) { alert(place.error || 'Fehler'); return; }
+  currentDetailPlace = place;
+  renderDetail(place);
+  document.getElementById('detailModal').classList.add('open');
+}
+
+function renderDetail(p) {
+  const cat = CATS[p.category] || CATS.other;
+  const tokens = myTokens();
+  const isOwner = !!tokens[p.id];
+
+  const productsHtml = (p.products || []).length ? `
+    <div style="margin-top:12px;">
+      <strong>Angebot</strong>
+      ${p.products.map(pr => `<div style="font-size:13px; display:flex; justify-content:space-between; border-top:1px solid #eee; padding:4px 0;"><span>${escapeHtml(pr.name)}</span><span>${escapeHtml(pr.price)}</span></div>`).join('')}
+    </div>` : '';
+
+  document.getElementById('detailContent').innerHTML = `
+    <h2>${cat.icon} ${escapeHtml(p.name)}
+      <span class="badge ${p.access}">${p.access === 'public' ? '🌍 Öffentlich' : '🔒 Privat'}</span>
+    </h2>
+    <div style="font-size:13px; color:#777;">${cat.label}</div>
+    ${p.photo ? `<img id="detailPhoto" src="${p.photo}">` : ''}
+    <p style="white-space:pre-wrap;">${escapeHtml(p.description) || '<em>Keine Beschreibung</em>'}</p>
+    ${p.season ? `<div><strong>Saison / Öffnungszeiten:</strong> ${escapeHtml(p.season)}</div>` : ''}
+    ${p.price ? `<div><strong>Preis:</strong> ${escapeHtml(p.price)}</div>` : ''}
+    ${p.free_harvest ? '<div>✅ Kostenlos</div>' : ''}
+    ${p.honesty_box ? '<div>💶 Ehrlichkeitskasse vorhanden</div>' : ''}
+    ${productsHtml}
+    ${p.orderable ? `<button id="orderBtn" style="margin-top:12px; width:100%; padding:10px; background:#3a5a40; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600;">🛒 Bestellanfrage senden</button>` : ''}
+
+    <div style="margin-top:16px;">
+      <strong>Bewertung</strong> (${p.rating_count} Bewertungen, Ø ${p.avg_rating})<br>
+      <span class="stars" id="starInput">☆☆☆☆☆</span>
+    </div>
+
+    <div style="margin-top:16px;">
+      <strong>Kommentare</strong>
+      <div id="commentList">
+        ${p.comments.map(c => `<div class="comment"><span class="author">${escapeHtml(c.author)}</span>: ${escapeHtml(c.text)}</div>`).join('') || '<div class="hint">Noch keine Kommentare.</div>'}
+      </div>
+      <input type="text" id="c_author" placeholder="Dein Name (optional)" style="margin-top:8px; width:100%; padding:6px; border:1px solid var(--border); border-radius:6px;">
+      <textarea id="c_text" placeholder="Kommentar schreiben…" style="width:100%; margin-top:6px; padding:6px; border:1px solid var(--border); border-radius:6px;"></textarea>
+      <button id="commentSend" style="margin-top:6px; background:#eee; border:none; padding:8px 12px; border-radius:6px; cursor:pointer;">Kommentar senden</button>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" id="detailClose">Schließen</button>
+      <button class="btn-save" id="detailEdit">✏️ Bearbeiten</button>
+      ${isOwner ? '<button class="btn-danger" id="detailDelete">🗑️ Löschen</button>' : ''}
+    </div>
+    ${isOwner && p.orderable ? '<button id="viewOrdersBtn" style="margin-top:10px; width:100%; padding:8px; background:#eee; border:none; border-radius:8px; cursor:pointer;">📦 Bestellungen ansehen</button>' : ''}
+    <div class="hint" style="margin-top:8px;">Zuletzt aktualisiert: ${new Date(p.updated_at).toLocaleString('de-DE')}</div>
+  `;
+
+  document.getElementById('detailClose').onclick = () => document.getElementById('detailModal').classList.remove('open');
+  document.getElementById('detailEdit').onclick = () => {
+    document.getElementById('detailModal').classList.remove('open');
+    openForm(p, { lat: p.lat, lng: p.lng });
+  };
+
+  const deleteBtn = document.getElementById('detailDelete');
+  if (deleteBtn) deleteBtn.onclick = async () => {
+    if (!confirm('Diesen Ort wirklich löschen?')) return;
+    const token = myTokens()[p.id];
+    const res = await fetch(`${API}?action=delete`, { method: 'POST', body: JSON.stringify({ id: p.id, owner_token: token }) });
+    const data = await res.json();
+    if (!res.ok) { alert('Fehler: ' + data.error); return; }
+    document.getElementById('detailModal').classList.remove('open');
+    await loadPlaces();
+  };
+
+  // Sterne-Bewertung
+  const starEl = document.getElementById('starInput');
+  starEl.onclick = async (e) => {
+    const rect = starEl.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const stars = Math.max(1, Math.min(5, Math.ceil(x / (rect.width / 5))));
+    await fetch(`${API}?action=rate`, { method: 'POST', body: JSON.stringify({ place_id: p.id, stars }) });
+    await refreshDetail(p.id);
+    await loadPlaces();
+  };
+
+  document.getElementById('commentSend').onclick = async () => {
+    const text = document.getElementById('c_text').value.trim();
+    if (!text) return;
+    const author = document.getElementById('c_author').value.trim();
+    await fetch(`${API}?action=comment_add`, { method: 'POST', body: JSON.stringify({ place_id: p.id, author, text }) });
+    await refreshDetail(p.id);
+  };
+
+  const orderBtn = document.getElementById('orderBtn');
+  if (orderBtn) orderBtn.onclick = () => openOrderModal(p);
+
+  const viewOrdersBtn = document.getElementById('viewOrdersBtn');
+  if (viewOrdersBtn) viewOrdersBtn.onclick = () => showOrders(p);
+}
+
+async function refreshDetail(id) {
+  const res = await fetch(`${API}?action=get&id=${id}`);
+  const place = await res.json();
+  currentDetailPlace = place;
+  renderDetail(place);
+}
+
+async function showOrders(p) {
+  const token = myTokens()[p.id];
+  const res = await fetch(`${API}?action=orders_list`, { method: 'POST', body: JSON.stringify({ place_id: p.id, owner_token: token }) });
+  const orders = await res.json();
+  if (!res.ok) { alert('Fehler: ' + orders.error); return; }
+  const html = orders.length ? orders.map(o => `
+    <div style="border-top:1px solid #eee; padding:8px 0; font-size:13px;">
+      <strong>${escapeHtml(o.customer_name)}</strong> (${escapeHtml(o.customer_contact)})<br>
+      ${o.items.map(it => `${escapeHtml(it.name)} × ${escapeHtml(it.qty)}`).join(', ')}<br>
+      ${o.note ? `<em>${escapeHtml(o.note)}</em><br>` : ''}
+      <span class="hint">${new Date(o.created_at).toLocaleString('de-DE')}</span>
+    </div>`).join('') : '<div class="hint">Noch keine Bestellungen.</div>';
+  document.getElementById('detailContent').innerHTML = `<h2>📦 Bestellungen</h2>${html}<div class="modal-actions"><button class="btn-cancel" id="ordersBack">Zurück</button></div>`;
+  document.getElementById('ordersBack').onclick = () => renderDetail(currentDetailPlace);
+}
+
+// -- Bestellformular --
+const orderModal = document.getElementById('orderModal');
+let orderTargetPlace = null;
+
+function openOrderModal(p) {
+  orderTargetPlace = p;
+  document.getElementById('o_name').value = '';
+  document.getElementById('o_contact').value = '';
+  document.getElementById('o_note').value = '';
+  const box = document.getElementById('orderItemsBox');
+  box.innerHTML = (p.products || []).map((pr, i) => `
+    <div class="order-item-row">
+      <input type="checkbox" class="oi_check" data-name="${escapeHtml(pr.name)}">
+      <span style="flex:1;">${escapeHtml(pr.name)} <span class="hint">${escapeHtml(pr.price)}</span></span>
+      <input type="number" class="oi_qty" min="1" value="1">
+    </div>`).join('') || '<div class="hint">Keine Produkte hinterlegt – bitte im Notizfeld beschreiben, was du möchtest.</div>';
+  document.getElementById('detailModal').classList.remove('open');
+  orderModal.classList.add('open');
+}
+document.getElementById('orderCancel').onclick = () => orderModal.classList.remove('open');
+
+document.getElementById('orderSend').onclick = async () => {
+  const name = document.getElementById('o_name').value.trim();
+  const contact = document.getElementById('o_contact').value.trim();
+  const note = document.getElementById('o_note').value.trim();
+  const items = [...document.querySelectorAll('.oi_check')]
+    .filter(c => c.checked)
+    .map(c => ({ name: c.dataset.name, qty: c.parentElement.querySelector('.oi_qty').value }));
+
+  if (!name || !contact) { alert('Bitte Name und Kontakt angeben.'); return; }
+  if (!items.length && !note) { alert('Bitte mindestens ein Produkt auswählen oder eine Notiz hinterlassen.'); return; }
+  if (!items.length) items.push({ name: 'siehe Notiz', qty: '1' });
+
+  const res = await fetch(`${API}?action=order_create`, {
+    method: 'POST',
+    body: JSON.stringify({ place_id: orderTargetPlace.id, customer_name: name, customer_contact: contact, items, note }),
+  });
+  const data = await res.json();
+  if (!res.ok) { alert('Fehler: ' + data.error); return; }
+  orderModal.classList.remove('open');
+  alert('Bestellanfrage gesendet! Der Anbieter meldet sich bei dir.');
+};
+
+// -- Start --
+loadPlaces();
+</script>
+</body>
+</html>
