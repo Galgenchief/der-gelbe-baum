@@ -58,12 +58,25 @@ Domain `dergelbebaum.de` kommt, sobald verfügbar).
 - Kontakt-E-Mail-Feld erscheint automatisch bei "Privat"-Einträgen oder wenn Bestellfunktion aktiv ist
 
 **Rezept-Planer**
-- 40 fest hinterlegte Rezepte (20 süß, 20 herzhaft), keine externe Rezept-API (Chefkoch o. ä.
-  hat keine offene API)
+- 450 fest hinterlegte Rezepte (je 100 Fleisch/Vegetarisch/Vegan/Süß, 50 Fisch), keine externe
+  Rezept-API (Chefkoch o. ä. hat keine offene API). Filter-Chips für alle 5 Kategorien
+  (`RECIPE_TYPES` in index.html), Zutaten-Vokabular um ~40 neue Einträge erweitert (pflanzliche
+  Proteine, Gemüsesorten, Gewürze) für vegane/vegetarische/Fisch-Rezepte
+- Jedes Rezept hat jetzt auch eine kurze Zubereitung (`steps`-Feld), wird in der Detailansicht
+  unter "Zubereitung" angezeigt. Für die 450 Rezepte automatisiert per Node-Skript aus
+  Gericht-Typ (Name) + den bereits hinterlegten Zutaten erzeugt, nicht händisch getippt
 - Toleranz-Auswahl (0–3 Zutaten dürfen separat im Supermarkt gekauft werden)
 - Google-Maps-Route mit allen Stopps, `optimize:true` für beste Reihenfolge, **kein**
   fester Startpunkt mehr – Google Maps nutzt automatisch den aktuellen Live-Standort
 - Öffnet in neuem Tab/der Maps-App (nicht die eigene Seite ersetzend)
+
+**Einkaufskorb** (neu)
+- Orte können per Button in der Detailansicht ("🧺 In den Einkaufskorb") gesammelt werden,
+  unabhängig vom Rezept-Planer. Persistiert in `localStorage` (`gb_basket`), übersteht Reload
+- Eigener Header-Button mit Live-Zähler, öffnet Liste der gesammelten Orte (Entfernen einzeln
+  oder "Korb leeren") mit Entfernungsangabe
+- "Route öffnen" nutzt dieselbe Google-Maps-Routing-Logik wie der Rezept-Planer (gemeinsame
+  Funktion `openMapsRoute()`, kein Code-Duplikat), `optimize:true`, kein fester Startpunkt
 
 **Sonstiges**
 - Info-Button (i) im Header erklärt Zweck der App, poppt beim ersten Besuch automatisch auf,

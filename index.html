@@ -173,6 +173,7 @@
   <div style="display:flex; gap:8px; align-items:center;">
     <button id="toggleSidebarBtn" class="primary" style="display:none; background:white;">☰ Menü</button>
     <button id="recipeBtn" class="primary" style="background:white;">🍳 Rezept-Planer</button>
+    <button id="basketBtn" class="primary" style="background:white;">🧺 Einkaufskorb<span id="basketCount"></span></button>
     <button id="addBtn" class="primary">＋ Bodenschatz melden</button>
   </div>
 </header>
@@ -287,6 +288,11 @@
 <!-- Rezept-Planer -->
 <div class="modal-overlay" id="recipeModal">
   <div class="modal" id="recipeContent" style="max-width:560px;"></div>
+</div>
+
+<!-- Einkaufskorb -->
+<div class="modal-overlay" id="basketModal">
+  <div class="modal" id="basketContent" style="max-width:560px;"></div>
 </div>
 
 <button id="featureRequestBtn">💡 Was fehlt dir?</button>
@@ -460,51 +466,507 @@ const INGREDIENTS = {
   pumpkin: { label: 'Kürbis', sources: [] },
   greenbeans: { label: 'Grüne Bohnen', sources: [] },
   peas: { label: 'Erbsen', sources: [] },
+  blueberry: { label: 'Heidelbeeren', sources: [src('berries', 'blueberry')] },
+  blackberry: { label: 'Brombeeren', sources: [src('berries', 'blackberry')] },
+  elderberry: { label: 'Holunderbeeren', sources: [src('berries', 'elderberry')] },
+  seabuckthorn: { label: 'Sanddorn', sources: [src('berries', 'seabuckthorn')] },
+  apricot: { label: 'Aprikosen', sources: [src('fruittrees', 'apricot')] },
+  peach: { label: 'Pfirsiche', sources: [src('fruittrees', 'peach')] },
+  mirabelle: { label: 'Mirabellen', sources: [src('fruittrees', 'mirabelle')] },
+  fish: { label: 'Fisch', sources: [src('fish')] },
+  tofu: { label: 'Tofu', sources: [] },
+  chickpeas: { label: 'Kichererbsen', sources: [] },
+  beans: { label: 'Bohnen (getrocknet)', sources: [] },
+  rice: { label: 'Reis', sources: [] },
+  oats: { label: 'Haferflocken', sources: [] },
+  couscous: { label: 'Couscous', sources: [] },
+  soymilk: { label: 'Sojamilch', sources: [] },
+  oatmilk: { label: 'Hafermilch', sources: [] },
+  coconutmilk: { label: 'Kokosmilch', sources: [] },
+  coconut: { label: 'Kokosraspel', sources: [] },
+  margarine: { label: 'Margarine (pflanzlich)', sources: [] },
+  tomato: { label: 'Tomaten', sources: [src('farmshop', 'vegetables'), src('market', 'vegetables')] },
+  cucumber: { label: 'Gurken', sources: [src('farmshop', 'vegetables'), src('market', 'vegetables')] },
+  bellpepper: { label: 'Paprika (frisch)', sources: [src('farmshop', 'vegetables'), src('market', 'vegetables')] },
+  eggplant: { label: 'Aubergine', sources: [src('farmshop', 'vegetables'), src('market', 'vegetables')] },
+  zucchini: { label: 'Zucchini', sources: [src('farmshop', 'vegetables'), src('market', 'vegetables')] },
+  spinach: { label: 'Spinat', sources: [src('farmshop', 'vegetables'), src('market', 'vegetables')] },
+  cabbage: { label: 'Kohl', sources: [src('farmshop', 'vegetables'), src('market', 'vegetables')] },
+  leek: { label: 'Lauch', sources: [src('farmshop', 'vegetables'), src('market', 'vegetables')] },
+  corn: { label: 'Mais', sources: [src('farmshop', 'vegetables'), src('market', 'vegetables')] },
+  carrot: { label: 'Karotten', sources: [src('farmshop', 'vegetables'), src('market', 'vegetables')] },
+  celery: { label: 'Sellerie', sources: [src('farmshop', 'vegetables'), src('market', 'vegetables')] },
+  broccoli: { label: 'Brokkoli', sources: [src('farmshop', 'vegetables'), src('market', 'vegetables')] },
+  cauliflower: { label: 'Blumenkohl', sources: [src('farmshop', 'vegetables'), src('market', 'vegetables')] },
+  ginger: { label: 'Ingwer', sources: [] },
+  chiliflakes: { label: 'Chiliflocken', sources: [] },
+  cumin: { label: 'Kreuzkümmel', sources: [] },
+  soysauce: { label: 'Sojasoße', sources: [] },
+  vegetablebroth: { label: 'Gemüsebrühe', sources: [] },
+  tahini: { label: 'Tahini', sources: [] },
+  lime: { label: 'Limette', sources: [] },
+  yeast: { label: 'Hefe', sources: [] },
+  cornstarch: { label: 'Speisestärke', sources: [] },
+  nutmeg: { label: 'Muskat', sources: [] },
+  capers: { label: 'Kapern', sources: [] },
 };
 
 const RECIPES = [
-  // -- Süß / Kuchen --
-  { id: 'apfelkuchen', name: 'Apfelkuchen', type: 'sweet', ingredients: ['apple', 'flour', 'sugar', 'eggs', 'butter', 'bakingpowder', 'cinnamon'] },
-  { id: 'kaesekuchen', name: 'Käsekuchen', type: 'sweet', ingredients: ['quark', 'eggs', 'sugar', 'butter', 'flour', 'vanillasugar'] },
-  { id: 'streuselkuchen', name: 'Streuselkuchen', type: 'sweet', ingredients: ['flour', 'sugar', 'butter', 'eggs', 'milk', 'apple'] },
-  { id: 'marmorkuchen', name: 'Marmorkuchen', type: 'sweet', ingredients: ['flour', 'sugar', 'eggs', 'butter', 'chocolate', 'bakingpowder'] },
-  { id: 'zitronenkuchen', name: 'Zitronenkuchen', type: 'sweet', ingredients: ['flour', 'sugar', 'eggs', 'butter', 'lemon', 'bakingpowder'] },
-  { id: 'bienenstich', name: 'Bienenstich', type: 'sweet', ingredients: ['flour', 'sugar', 'eggs', 'butter', 'honey', 'almonds', 'cream', 'vanillasugar'] },
-  { id: 'zwetschgendatschi', name: 'Zwetschgendatschi', type: 'sweet', ingredients: ['plum', 'flour', 'sugar', 'butter', 'eggs', 'bakingpowder'] },
-  { id: 'donauwelle', name: 'Donauwelle', type: 'sweet', ingredients: ['flour', 'sugar', 'eggs', 'butter', 'chocolate', 'cherry', 'cream'] },
-  { id: 'frankfurterkranz', name: 'Frankfurter Kranz', type: 'sweet', ingredients: ['flour', 'sugar', 'eggs', 'butter', 'hazelnut', 'jam'] },
-  { id: 'sachertorte', name: 'Sachertorte', type: 'sweet', ingredients: ['flour', 'sugar', 'eggs', 'butter', 'chocolate', 'jam'] },
-  { id: 'schwarzwaelder', name: 'Schwarzwälder Kirschtorte', type: 'sweet', ingredients: ['flour', 'sugar', 'eggs', 'butter', 'cherry', 'cream', 'chocolate'] },
-  { id: 'nusskuchen', name: 'Nusskuchen', type: 'sweet', ingredients: ['flour', 'sugar', 'eggs', 'butter', 'walnut', 'bakingpowder'] },
-  { id: 'moehrenkuchen', name: 'Möhrenkuchen', type: 'sweet', ingredients: ['flour', 'sugar', 'eggs', 'oil', 'walnut', 'bakingpowder', 'cinnamon'] },
-  { id: 'kirschkuchen', name: 'Kirschkuchen', type: 'sweet', ingredients: ['cherry', 'flour', 'sugar', 'eggs', 'butter', 'bakingpowder'] },
-  { id: 'pflaumenkuchen', name: 'Pflaumenkuchen', type: 'sweet', ingredients: ['plum', 'flour', 'sugar', 'butter', 'eggs', 'cinnamon'] },
-  { id: 'stachelbeerkuchen', name: 'Stachelbeerkuchen', type: 'sweet', ingredients: ['gooseberry', 'flour', 'sugar', 'eggs', 'butter', 'bakingpowder'] },
-  { id: 'rhabarberkuchen', name: 'Rhabarberkuchen', type: 'sweet', ingredients: ['rhubarb', 'flour', 'sugar', 'eggs', 'butter', 'vanillasugar'] },
-  { id: 'johannisbeerkuchen', name: 'Johannisbeerkuchen', type: 'sweet', ingredients: ['currant', 'flour', 'sugar', 'eggs', 'butter', 'bakingpowder'] },
-  { id: 'baumkuchen', name: 'Baumkuchen', type: 'sweet', ingredients: ['eggs', 'sugar', 'butter', 'flour', 'vanillasugar', 'jam'] },
-  { id: 'himbeertorte', name: 'Himbeertorte', type: 'sweet', ingredients: ['raspberry', 'flour', 'sugar', 'eggs', 'butter', 'cream', 'gelatin'] },
-  // -- Herzhaft --
-  { id: 'schnitzel', name: 'Schnitzel mit Kartoffelsalat', type: 'savory', ingredients: ['meat', 'potatoes', 'eggs', 'breadcrumbs', 'flour', 'onion'] },
-  { id: 'rouladen', name: 'Rouladen', type: 'savory', ingredients: ['meat', 'onion', 'gherkin', 'mustard', 'vegetables'] },
-  { id: 'gulasch', name: 'Gulasch', type: 'savory', ingredients: ['meat', 'onion', 'vegetables', 'paprika', 'potatoes'] },
-  { id: 'currywurst', name: 'Currywurst', type: 'savory', ingredients: ['meat', 'curry', 'ketchup'] },
-  { id: 'kartoffelsalat', name: 'Kartoffelsalat', type: 'savory', ingredients: ['potatoes', 'onion', 'vinegar', 'oil', 'eggs'] },
-  { id: 'sauerbraten', name: 'Sauerbraten', type: 'savory', ingredients: ['meat', 'onion', 'vegetables', 'vinegar', 'raisins'] },
-  { id: 'kaesespaetzle', name: 'Käsespätzle', type: 'savory', ingredients: ['pasta', 'cheese', 'onion'] },
-  { id: 'kartoffelsuppe', name: 'Kartoffelsuppe', type: 'savory', ingredients: ['potatoes', 'vegetables', 'meat', 'cream'] },
-  { id: 'linsensuppe', name: 'Linsensuppe', type: 'savory', ingredients: ['lentils', 'potatoes', 'vegetables', 'meat'] },
-  { id: 'frikadellen', name: 'Frikadellen', type: 'savory', ingredients: ['meat', 'onion', 'eggs', 'breadcrumbs'] },
-  { id: 'kartoffelpuffer', name: 'Kartoffelpuffer', type: 'savory', ingredients: ['potatoes', 'onion', 'eggs', 'flour'] },
-  { id: 'bratkartoffeln', name: 'Bratkartoffeln', type: 'savory', ingredients: ['potatoes', 'onion', 'meat'] },
-  { id: 'gemueseeintopf', name: 'Gemüseeintopf', type: 'savory', ingredients: ['vegetables', 'potatoes', 'meat'] },
-  { id: 'flammkuchen', name: 'Flammkuchen', type: 'savory', ingredients: ['flour', 'cream', 'onion', 'meat'] },
-  { id: 'kuerbissuppe', name: 'Kürbissuppe', type: 'savory', ingredients: ['pumpkin', 'vegetables', 'cream', 'onion'] },
-  { id: 'bohnensuppe', name: 'Grüne Bohnensuppe', type: 'savory', ingredients: ['greenbeans', 'potatoes', 'meat'] },
-  { id: 'erbsensuppe', name: 'Erbsensuppe', type: 'savory', ingredients: ['peas', 'potatoes', 'meat'] },
-  { id: 'pilzpfanne', name: 'Pilzpfanne', type: 'savory', ingredients: ['mushrooms', 'onion', 'cream', 'butter'] },
-  { id: 'kraeuterquark', name: 'Kräuterquark mit Kartoffeln', type: 'savory', ingredients: ['quark', 'herbs_general', 'potatoes'] },
-  { id: 'baerlauchpesto', name: 'Bärlauch-Pesto-Nudeln', type: 'savory', ingredients: ['wildgarlic', 'pasta', 'cheese', 'walnut', 'oil'] },
+  // ==================== SÜSS (100) ====================
+  { id: 'apfelkuchen', name: 'Apfelkuchen', type: 'sweet', ingredients: ["apple","flour","sugar","eggs","butter","bakingpowder","cinnamon"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Äpfel unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'kaesekuchen', name: 'Käsekuchen', type: 'sweet', ingredients: ["quark","eggs","sugar","butter","flour","vanillasugar"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Quark unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'streuselkuchen', name: 'Streuselkuchen', type: 'sweet', ingredients: ["flour","sugar","butter","eggs","milk","apple"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Mehl unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'marmorkuchen', name: 'Marmorkuchen', type: 'sweet', ingredients: ["flour","sugar","eggs","butter","chocolate","bakingpowder"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Mehl unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'zitronenkuchen', name: 'Zitronenkuchen', type: 'sweet', ingredients: ["flour","sugar","eggs","butter","lemon","bakingpowder"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Mehl unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'bienenstich', name: 'Bienenstich', type: 'sweet', ingredients: ["flour","sugar","eggs","butter","honey","almonds","cream","vanillasugar"], steps: 'Zutaten (Mehl, Zucker, Eier) zu einem Teig bzw. einer Masse verarbeiten und nach Bedarf backen oder kalt stellen, bis alles fest bzw. durchgebacken ist.' },
+  { id: 'zwetschgendatschi', name: 'Zwetschgendatschi', type: 'sweet', ingredients: ["plum","flour","sugar","butter","eggs","bakingpowder"], steps: 'Zutaten (Zwetschgen/Pflaumen, Mehl, Zucker) zu einem Teig bzw. einer Masse verarbeiten und nach Bedarf backen oder kalt stellen, bis alles fest bzw. durchgebacken ist.' },
+  { id: 'donauwelle', name: 'Donauwelle', type: 'sweet', ingredients: ["flour","sugar","eggs","butter","chocolate","cherry","cream"], steps: 'Zutaten (Mehl, Zucker, Eier) zu einem Teig bzw. einer Masse verarbeiten und nach Bedarf backen oder kalt stellen, bis alles fest bzw. durchgebacken ist.' },
+  { id: 'frankfurterkranz', name: 'Frankfurter Kranz', type: 'sweet', ingredients: ["flour","sugar","eggs","butter","hazelnut","jam"], steps: 'Zutaten (Mehl, Zucker, Eier) zu einem Teig bzw. einer Masse verarbeiten und nach Bedarf backen oder kalt stellen, bis alles fest bzw. durchgebacken ist.' },
+  { id: 'sachertorte', name: 'Sachertorte', type: 'sweet', ingredients: ["flour","sugar","eggs","butter","chocolate","jam"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Mehl unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'schwarzwaelder', name: 'Schwarzwälder Kirschtorte', type: 'sweet', ingredients: ["flour","sugar","eggs","butter","cherry","cream","chocolate"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Mehl unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'nusskuchen', name: 'Nusskuchen', type: 'sweet', ingredients: ["flour","sugar","eggs","butter","walnut","bakingpowder"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Mehl unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'moehrenkuchen', name: 'Möhrenkuchen', type: 'sweet', ingredients: ["flour","sugar","eggs","oil","walnut","bakingpowder","cinnamon"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Mehl unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'kirschkuchen', name: 'Kirschkuchen', type: 'sweet', ingredients: ["cherry","flour","sugar","eggs","butter","bakingpowder"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Kirschen unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'pflaumenkuchen', name: 'Pflaumenkuchen', type: 'sweet', ingredients: ["plum","flour","sugar","butter","eggs","cinnamon"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Zwetschgen/Pflaumen unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'stachelbeerkuchen', name: 'Stachelbeerkuchen', type: 'sweet', ingredients: ["gooseberry","flour","sugar","eggs","butter","bakingpowder"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Stachelbeeren unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'rhabarberkuchen', name: 'Rhabarberkuchen', type: 'sweet', ingredients: ["rhubarb","flour","sugar","eggs","butter","vanillasugar"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Rhabarber unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'johannisbeerkuchen', name: 'Johannisbeerkuchen', type: 'sweet', ingredients: ["currant","flour","sugar","eggs","butter","bakingpowder"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Johannisbeeren unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'baumkuchen', name: 'Baumkuchen', type: 'sweet', ingredients: ["eggs","sugar","butter","flour","vanillasugar","jam"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Eier unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'himbeertorte', name: 'Himbeertorte', type: 'sweet', ingredients: ["raspberry","flour","sugar","eggs","butter","cream","gelatin"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Himbeeren unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw01', name: 'Vanillepudding', type: 'sweet', ingredients: ["milk","vanillasugar","sugar","cornstarch"], steps: 'Milch mit Zucker erhitzen, Vanillezucker, Zucker, Speisestärke einrühren, kurz köcheln lassen und kalt stellen, bis die Masse fest wird.' },
+  { id: 'sw02', name: 'Schokopudding', type: 'sweet', ingredients: ["milk","chocolate","sugar","cornstarch"], steps: 'Milch mit Zucker erhitzen, Schokolade/Kakao, Zucker, Speisestärke einrühren, kurz köcheln lassen und kalt stellen, bis die Masse fest wird.' },
+  { id: 'sw03', name: 'Grießpudding mit Kompott', type: 'sweet', ingredients: ["milk","sugar","apple"], steps: 'Milch mit Zucker erhitzen, Zucker, Äpfel einrühren, kurz köcheln lassen und kalt stellen, bis die Masse fest wird.' },
+  { id: 'sw04', name: 'Milchreis mit Zimt und Zucker', type: 'sweet', ingredients: ["milk","rice","sugar","cinnamon"], steps: 'Zutaten (Milch, Reis, Zucker) zu einem Teig bzw. einer Masse verarbeiten und nach Bedarf backen oder kalt stellen, bis alles fest bzw. durchgebacken ist.' },
+  { id: 'sw05', name: 'Kaiserschmarrn', type: 'sweet', ingredients: ["flour","eggs","milk","sugar","raisins"], steps: 'Aus Mehl, Eier und den übrigen Zutaten einen Teig rühren, portionsweise goldbraun ausbacken und mit Rosinen servieren.' },
+  { id: 'sw06', name: 'Pfannkuchen mit Apfelmus', type: 'sweet', ingredients: ["flour","eggs","milk","apple"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Mehl unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw07', name: 'Palatschinken mit Marmelade', type: 'sweet', ingredients: ["flour","eggs","milk","jam"], steps: 'Aus Mehl, Eier und den übrigen Zutaten einen Teig rühren, portionsweise goldbraun ausbacken und mit Marmelade servieren.' },
+  { id: 'sw08', name: 'Dampfnudeln mit Vanillesoße', type: 'sweet', ingredients: ["flour","milk","yeast","sugar"], steps: 'Teig aus Mehl, Milch zubereiten, mit Zucker füllen, formen und backen bzw. im Dampf oder in Fett gar ziehen lassen.' },
+  { id: 'sw09', name: 'Waffeln mit Kirschen', type: 'sweet', ingredients: ["flour","eggs","milk","cherry","sugar"], steps: 'Aus Mehl, Eier und den übrigen Zutaten einen Teig rühren, portionsweise goldbraun ausbacken und mit Zucker servieren.' },
+  { id: 'sw10', name: 'Crêpes mit Zucker und Zitrone', type: 'sweet', ingredients: ["flour","eggs","milk","lemon","sugar"], steps: 'Aus Mehl, Eier und den übrigen Zutaten einen Teig rühren, portionsweise goldbraun ausbacken und mit Zucker servieren.' },
+  { id: 'sw11', name: 'Quarkbällchen', type: 'sweet', ingredients: ["quark","flour","eggs","sugar"], steps: 'Zutaten (Quark, Mehl, Eier) zu einem Teig bzw. einer Masse verarbeiten und nach Bedarf backen oder kalt stellen, bis alles fest bzw. durchgebacken ist.' },
+  { id: 'sw12', name: 'Berliner (Krapfen)', type: 'sweet', ingredients: ["flour","yeast","eggs","jam","sugar"], steps: 'Teig aus Mehl, Hefe zubereiten, mit Zucker füllen, formen und backen bzw. im Dampf oder in Fett gar ziehen lassen.' },
+  { id: 'sw13', name: 'Zimtschnecken', type: 'sweet', ingredients: ["flour","yeast","butter","cinnamon","sugar"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Mehl unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw14', name: 'Streuselschnecken', type: 'sweet', ingredients: ["flour","yeast","butter","sugar"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Mehl unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw15', name: 'Mohnkuchen', type: 'sweet', ingredients: ["flour","sugar","eggs","butter","milk"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Mehl unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw16', name: 'Buchteln mit Vanillesoße', type: 'sweet', ingredients: ["flour","yeast","milk","sugar"], steps: 'Teig aus Mehl, Hefe zubereiten, mit Zucker füllen, formen und backen bzw. im Dampf oder in Fett gar ziehen lassen.' },
+  { id: 'sw17', name: 'Rohrnudeln', type: 'sweet', ingredients: ["flour","yeast","milk","butter"], steps: 'Zutaten (Mehl, Hefe, Milch) zu einem Teig bzw. einer Masse verarbeiten und nach Bedarf backen oder kalt stellen, bis alles fest bzw. durchgebacken ist.' },
+  { id: 'sw18', name: 'Grießschnitten', type: 'sweet', ingredients: ["milk","sugar","eggs"], steps: 'Zutaten (Milch, Zucker, Eier) zu einem Teig bzw. einer Masse verarbeiten und nach Bedarf backen oder kalt stellen, bis alles fest bzw. durchgebacken ist.' },
+  { id: 'sw19', name: 'Apfelstrudel', type: 'sweet', ingredients: ["apple","flour","sugar","butter","raisins","cinnamon"], steps: 'Teig aus Äpfel, Mehl zubereiten, mit Zimt füllen, formen und backen bzw. im Dampf oder in Fett gar ziehen lassen.' },
+  { id: 'sw20', name: 'Kirschstrudel', type: 'sweet', ingredients: ["cherry","flour","sugar","butter"], steps: 'Teig aus Kirschen, Mehl zubereiten, mit Butter füllen, formen und backen bzw. im Dampf oder in Fett gar ziehen lassen.' },
+  { id: 'sw21', name: 'Quarkstrudel', type: 'sweet', ingredients: ["quark","flour","sugar","eggs"], steps: 'Teig aus Quark, Mehl zubereiten, mit Eier füllen, formen und backen bzw. im Dampf oder in Fett gar ziehen lassen.' },
+  { id: 'sw22', name: 'Windbeutel mit Sahne', type: 'sweet', ingredients: ["flour","eggs","butter","cream","sugar"], steps: 'Zutaten (Mehl, Eier, Butter) zu einem Teig bzw. einer Masse verarbeiten und nach Bedarf backen oder kalt stellen, bis alles fest bzw. durchgebacken ist.' },
+  { id: 'sw23', name: 'Profiteroles', type: 'sweet', ingredients: ["flour","eggs","butter","chocolate","cream"], steps: 'Zutaten (Mehl, Eier, Butter) zu einem Teig bzw. einer Masse verarbeiten und nach Bedarf backen oder kalt stellen, bis alles fest bzw. durchgebacken ist.' },
+  { id: 'sw24', name: 'Zitronentorte', type: 'sweet', ingredients: ["flour","sugar","eggs","butter","lemon"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Mehl unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw25', name: 'Johannisbeertorte', type: 'sweet', ingredients: ["currant","flour","sugar","eggs","cream"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Johannisbeeren unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw26', name: 'Käse-Sahne-Torte', type: 'sweet', ingredients: ["quark","cream","sugar","eggs","flour"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Quark unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw27', name: 'Buttercremetorte', type: 'sweet', ingredients: ["flour","sugar","eggs","butter"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Mehl unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw28', name: 'Obstkuchen mit Vanillepudding', type: 'sweet', ingredients: ["apple","flour","sugar","milk","vanillasugar"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Äpfel unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw29', name: 'Streuselkuchen mit Pflaumen', type: 'sweet', ingredients: ["plum","flour","sugar","butter"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Zwetschgen/Pflaumen unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw30', name: 'Kokosmakronen', type: 'sweet', ingredients: ["coconut","sugar","eggs"], steps: 'Zutaten (Kokosraspel, Zucker) zu einem Teig verarbeiten, kühl stellen, ausrollen oder zu Kugeln formen und bei 180°C ca. 10–15 Minuten backen.' },
+  { id: 'sw31', name: 'Haselnussmakronen', type: 'sweet', ingredients: ["hazelnut","sugar","eggs"], steps: 'Zutaten (Haselnüsse, Zucker) zu einem Teig verarbeiten, kühl stellen, ausrollen oder zu Kugeln formen und bei 180°C ca. 10–15 Minuten backen.' },
+  { id: 'sw32', name: 'Nussecken', type: 'sweet', ingredients: ["walnut","flour","sugar","butter","jam"], steps: 'Zutaten (Walnüsse, Mehl) zu einem Teig verarbeiten, kühl stellen, ausrollen oder zu Kugeln formen und bei 180°C ca. 10–15 Minuten backen.' },
+  { id: 'sw33', name: 'Butterplätzchen', type: 'sweet', ingredients: ["flour","butter","sugar","eggs"], steps: 'Zutaten (Mehl, Butter) zu einem Teig verarbeiten, kühl stellen, ausrollen oder zu Kugeln formen und bei 180°C ca. 10–15 Minuten backen.' },
+  { id: 'sw34', name: 'Vanillekipferl', type: 'sweet', ingredients: ["flour","butter","almonds","vanillasugar","sugar"], steps: 'Zutaten (Mehl, Butter) zu einem Teig verarbeiten, kühl stellen, ausrollen oder zu Kugeln formen und bei 180°C ca. 10–15 Minuten backen.' },
+  { id: 'sw35', name: 'Zimtsterne', type: 'sweet', ingredients: ["almonds","sugar","eggs","cinnamon"], steps: 'Zutaten (Mandeln, Zucker) zu einem Teig verarbeiten, kühl stellen, ausrollen oder zu Kugeln formen und bei 180°C ca. 10–15 Minuten backen.' },
+  { id: 'sw36', name: 'Lebkuchen', type: 'sweet', ingredients: ["flour","honey","cinnamon","eggs"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Mehl unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw37', name: 'Spekulatius', type: 'sweet', ingredients: ["flour","butter","sugar","cinnamon"], steps: 'Zutaten (Mehl, Butter) zu einem Teig verarbeiten, kühl stellen, ausrollen oder zu Kugeln formen und bei 180°C ca. 10–15 Minuten backen.' },
+  { id: 'sw38', name: 'Florentiner', type: 'sweet', ingredients: ["almonds","honey","sugar","butter"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Mandeln unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw39', name: 'Baumkuchenspitzen', type: 'sweet', ingredients: ["eggs","sugar","butter","flour","chocolate"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Eier unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw40', name: 'Rumkugeln', type: 'sweet', ingredients: ["chocolate","sugar","breadcrumbs"], steps: 'Zutaten (Schokolade/Kakao, Zucker, Semmelbrösel) zu einem Teig bzw. einer Masse verarbeiten und nach Bedarf backen oder kalt stellen, bis alles fest bzw. durchgebacken ist.' },
+  { id: 'sw41', name: 'Marzipankartoffeln', type: 'sweet', ingredients: ["almonds","sugar","cinnamon"], steps: 'Zutaten (Mandeln, Zucker, Zimt) zu einem Teig bzw. einer Masse verarbeiten und nach Bedarf backen oder kalt stellen, bis alles fest bzw. durchgebacken ist.' },
+  { id: 'sw42', name: 'Marmorkuchen mit Schokoglasur', type: 'sweet', ingredients: ["flour","sugar","eggs","butter","chocolate"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Mehl unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw43', name: 'Gugelhupf', type: 'sweet', ingredients: ["flour","sugar","eggs","butter","raisins"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Mehl unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw44', name: 'Sandkuchen', type: 'sweet', ingredients: ["flour","sugar","eggs","butter"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Mehl unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw45', name: 'Butterkuchen', type: 'sweet', ingredients: ["flour","sugar","butter","almonds"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Mehl unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw46', name: 'Bienenstich-Muffins', type: 'sweet', ingredients: ["flour","sugar","eggs","honey","almonds"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Mehl unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw47', name: 'Apfelmuffins', type: 'sweet', ingredients: ["flour","sugar","eggs","apple"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Mehl unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw48', name: 'Schokomuffins', type: 'sweet', ingredients: ["flour","sugar","eggs","chocolate"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Mehl unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw49', name: 'Blaubeermuffins', type: 'sweet', ingredients: ["flour","sugar","eggs","blueberry"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Mehl unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw50', name: 'Zitronenmuffins', type: 'sweet', ingredients: ["flour","sugar","eggs","lemon"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Mehl unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw51', name: 'Beerentorte', type: 'sweet', ingredients: ["raspberry","currant","cream","flour","sugar"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Himbeeren unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw52', name: 'Pfirsichkuchen', type: 'sweet', ingredients: ["peach","flour","sugar","eggs","butter"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Pfirsiche unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw53', name: 'Aprikosenkuchen', type: 'sweet', ingredients: ["apricot","flour","sugar","eggs","butter"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Aprikosen unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw54', name: 'Mirabellenkuchen', type: 'sweet', ingredients: ["mirabelle","flour","sugar","eggs","butter"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Mirabellen unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw55', name: 'Quittengelee-Törtchen', type: 'sweet', ingredients: ["quince","sugar","flour"], steps: 'Zutaten (Quitten, Zucker, Mehl) zu einem Teig bzw. einer Masse verarbeiten und nach Bedarf backen oder kalt stellen, bis alles fest bzw. durchgebacken ist.' },
+  { id: 'sw56', name: 'Holunderblüten-Kuchen', type: 'sweet', ingredients: ["elderberry","flour","sugar","eggs"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Holunderbeeren unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw57', name: 'Sanddorn-Kuchen', type: 'sweet', ingredients: ["seabuckthorn","flour","sugar","eggs"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Sanddorn unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw58', name: 'Heidelbeerkuchen', type: 'sweet', ingredients: ["blueberry","flour","sugar","eggs","butter"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Heidelbeeren unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw59', name: 'Brombeerkuchen', type: 'sweet', ingredients: ["blackberry","flour","sugar","eggs","butter"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Brombeeren unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw60', name: 'Johannisbeerbaiser', type: 'sweet', ingredients: ["currant","eggs","sugar"], steps: 'Johannisbeeren mit Zucker erhitzen, Eier, Zucker einrühren, kurz köcheln lassen und kalt stellen, bis die Masse fest wird.' },
+  { id: 'sw61', name: 'Baiser mit Beeren', type: 'sweet', ingredients: ["eggs","sugar","raspberry"], steps: 'Eier mit Zucker erhitzen, Zucker, Himbeeren einrühren, kurz köcheln lassen und kalt stellen, bis die Masse fest wird.' },
+  { id: 'sw62', name: 'Tiramisu', type: 'sweet', ingredients: ["quark","eggs","sugar","chocolate"], steps: 'Zutaten (Quark, Eier, Zucker) zu einem Teig bzw. einer Masse verarbeiten und nach Bedarf backen oder kalt stellen, bis alles fest bzw. durchgebacken ist.' },
+  { id: 'sw63', name: 'Panna Cotta mit Beeren', type: 'sweet', ingredients: ["cream","sugar","raspberry"], steps: 'Sahne mit Zucker erhitzen, Zucker, Himbeeren einrühren, kurz köcheln lassen und kalt stellen, bis die Masse fest wird.' },
+  { id: 'sw64', name: 'Crème brûlée', type: 'sweet', ingredients: ["cream","eggs","sugar","vanillasugar"], steps: 'Sahne mit Zucker erhitzen, Eier, Zucker, Vanillezucker einrühren, kurz köcheln lassen und kalt stellen, bis die Masse fest wird.' },
+  { id: 'sw65', name: 'Schokomousse', type: 'sweet', ingredients: ["chocolate","eggs","cream","sugar"], steps: 'Schokolade/Kakao mit Zucker erhitzen, Eier, Sahne, Zucker einrühren, kurz köcheln lassen und kalt stellen, bis die Masse fest wird.' },
+  { id: 'sw66', name: 'Zitronenmousse', type: 'sweet', ingredients: ["lemon","eggs","cream","sugar"], steps: 'Zitrone mit Zucker erhitzen, Eier, Sahne, Zucker einrühren, kurz köcheln lassen und kalt stellen, bis die Masse fest wird.' },
+  { id: 'sw67', name: 'Fruchtquark', type: 'sweet', ingredients: ["quark","sugar","raspberry"], steps: 'Zutaten (Quark, Zucker, Himbeeren) zu einem Teig bzw. einer Masse verarbeiten und nach Bedarf backen oder kalt stellen, bis alles fest bzw. durchgebacken ist.' },
+  { id: 'sw68', name: 'Joghurt mit Honig und Nüssen', type: 'sweet', ingredients: ["milk","honey","walnut"], steps: 'Zutaten (Milch, Honig, Walnüsse) zu einem Teig bzw. einer Masse verarbeiten und nach Bedarf backen oder kalt stellen, bis alles fest bzw. durchgebacken ist.' },
+  { id: 'sw69', name: 'Honigkuchen', type: 'sweet', ingredients: ["honey","flour","eggs","cinnamon"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Honig unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw70', name: 'Lebkuchenherzen', type: 'sweet', ingredients: ["honey","flour","cinnamon","eggs"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Honig unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw71', name: 'Mandelhörnchen', type: 'sweet', ingredients: ["almonds","sugar","eggs","chocolate"], steps: 'Zutaten (Mandeln, Zucker, Eier) zu einem Teig bzw. einer Masse verarbeiten und nach Bedarf backen oder kalt stellen, bis alles fest bzw. durchgebacken ist.' },
+  { id: 'sw72', name: 'Walnusstorte', type: 'sweet', ingredients: ["walnut","flour","sugar","eggs","butter"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Walnüsse unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw73', name: 'Haselnusstorte', type: 'sweet', ingredients: ["hazelnut","flour","sugar","eggs","butter"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Haselnüsse unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw74', name: 'Kokoskuchen', type: 'sweet', ingredients: ["coconut","flour","sugar","eggs","butter"], steps: 'Butter mit Zucker und Eiern schaumig rühren, Kokosraspel unterheben, mit Mehl (und ggf. Backpulver) zu einem Teig verarbeiten, in eine Form füllen und bei 180°C ca. 40–50 Minuten backen.' },
+  { id: 'sw75', name: 'Karamellpudding', type: 'sweet', ingredients: ["milk","sugar","eggs"], steps: 'Milch mit Zucker erhitzen, Zucker, Eier einrühren, kurz köcheln lassen und kalt stellen, bis die Masse fest wird.' },
+  { id: 'sw76', name: 'Apfeltaschen', type: 'sweet', ingredients: ["apple","flour","butter","sugar"], steps: 'Teig aus Äpfel, Mehl zubereiten, mit Zucker füllen, formen und backen bzw. im Dampf oder in Fett gar ziehen lassen.' },
+  { id: 'sw77', name: 'Quarktaschen', type: 'sweet', ingredients: ["quark","flour","butter","sugar"], steps: 'Teig aus Quark, Mehl zubereiten, mit Zucker füllen, formen und backen bzw. im Dampf oder in Fett gar ziehen lassen.' },
+  { id: 'sw78', name: 'Pflaumenknödel', type: 'sweet', ingredients: ["plum","quark","flour"], steps: 'Teig aus Zwetschgen/Pflaumen, Quark zubereiten, mit Mehl füllen, formen und backen bzw. im Dampf oder in Fett gar ziehen lassen.' },
+  { id: 'sw79', name: 'Aprikosenknödel', type: 'sweet', ingredients: ["apricot","quark","flour"], steps: 'Teig aus Aprikosen, Quark zubereiten, mit Mehl füllen, formen und backen bzw. im Dampf oder in Fett gar ziehen lassen.' },
+  { id: 'sw80', name: 'Pflaumenmus-Taschen', type: 'sweet', ingredients: ["jam","flour","butter","sugar"], steps: 'Teig aus Marmelade, Mehl zubereiten, mit Zucker füllen, formen und backen bzw. im Dampf oder in Fett gar ziehen lassen.' },
+  // ==================== FLEISCH (100) ====================
+  { id: 'schnitzel', name: 'Schnitzel mit Kartoffelsalat', type: 'meat', ingredients: ["meat","potatoes","eggs","breadcrumbs","flour","onion"], steps: 'Wurst & Fleisch klopfen bzw. in Portionen teilen, in Mehl, Ei und Paniermehl wenden und in heißem Fett goldbraun braten.' },
+  { id: 'rouladen', name: 'Rouladen', type: 'meat', ingredients: ["meat","onion","gherkin","mustard","vegetables"], steps: 'Füllung aus Zwiebeln, Gewürzgurken, Senf, Gemüse zubereiten, in Wurst & Fleisch einrollen, feststecken und in Brühe ca. 60–90 Minuten schmoren lassen.' },
+  { id: 'gulasch', name: 'Gulasch', type: 'meat', ingredients: ["meat","onion","vegetables","paprika","potatoes"], steps: 'Wurst & Fleisch kräftig anbraten, Zwiebeln zugeben, mit Paprika bzw. Gewürzen bestäuben, ablöschen und mit Zwiebeln, Gemüse, Paprikapulver, Kartoffeln 60–90 Minuten schmoren lassen.' },
+  { id: 'currywurst', name: 'Currywurst', type: 'meat', ingredients: ["meat","curry","ketchup"], steps: 'Zwiebeln andünsten, Wurst & Fleisch zugeben, mit Currypulver würzen, mit Kokosmilch ablöschen und 15–20 Minuten köcheln lassen.' },
+  { id: 'sauerbraten', name: 'Sauerbraten', type: 'meat', ingredients: ["meat","onion","vegetables","vinegar","raisins"], steps: 'Wurst & Fleisch würzen, scharf anbraten und im Ofen bei ca. 160–180°C gar ziehen lassen, dazu Zwiebeln, Gemüse, Essig, Rosinen zubereiten.' },
+  { id: 'kartoffelsuppe', name: 'Kartoffelsuppe', type: 'meat', ingredients: ["potatoes","vegetables","meat","cream"], steps: 'Zwiebeln (falls vorhanden) andünsten, Kartoffeln, Gemüse zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'linsensuppe', name: 'Linsensuppe', type: 'meat', ingredients: ["lentils","potatoes","vegetables","meat"], steps: 'Zwiebeln (falls vorhanden) andünsten, Linsen, Kartoffeln zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'frikadellen', name: 'Frikadellen', type: 'meat', ingredients: ["meat","onion","eggs","breadcrumbs"], steps: 'Wurst & Fleisch, Zwiebeln, Eier vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'bratkartoffeln', name: 'Bratkartoffeln', type: 'meat', ingredients: ["potatoes","onion","meat"], steps: 'Kartoffeln, Zwiebeln, Wurst & Fleisch vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'gemueseeintopf', name: 'Gemüseeintopf', type: 'meat', ingredients: ["vegetables","potatoes","meat"], steps: 'Zwiebeln (falls vorhanden) andünsten, Gemüse, Kartoffeln zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'flammkuchen', name: 'Flammkuchen', type: 'meat', ingredients: ["flour","cream","onion","meat"], steps: 'Mehl, Sahne, Zwiebeln vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'bohnensuppe', name: 'Grüne Bohnensuppe', type: 'meat', ingredients: ["greenbeans","potatoes","meat"], steps: 'Zwiebeln (falls vorhanden) andünsten, Grüne Bohnen, Kartoffeln zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'erbsensuppe', name: 'Erbsensuppe', type: 'meat', ingredients: ["peas","potatoes","meat"], steps: 'Zwiebeln (falls vorhanden) andünsten, Erbsen, Kartoffeln zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'flei01', name: 'Rinderbraten mit Rotkohl', type: 'meat', ingredients: ["meat","cabbage","onion","potatoes"], steps: 'Wurst & Fleisch würzen, scharf anbraten und im Ofen bei ca. 160–180°C gar ziehen lassen, dazu Kohl, Zwiebeln, Kartoffeln zubereiten.' },
+  { id: 'flei02', name: 'Schweinebraten mit Knödeln', type: 'meat', ingredients: ["meat","potatoes","onion","breadcrumbs"], steps: 'Wurst & Fleisch würzen, scharf anbraten und im Ofen bei ca. 160–180°C gar ziehen lassen, dazu Kartoffeln, Zwiebeln, Semmelbrösel zubereiten.' },
+  { id: 'flei03', name: 'Hähnchenschnitzel mit Pommes', type: 'meat', ingredients: ["meat","potatoes","eggs","flour","breadcrumbs"], steps: 'Wurst & Fleisch klopfen bzw. in Portionen teilen, in Mehl, Ei und Paniermehl wenden und in heißem Fett goldbraun braten.' },
+  { id: 'flei04', name: 'Entenbrust mit Rotkohl', type: 'meat', ingredients: ["meat","cabbage","potatoes"], steps: 'Wurst & Fleisch, Kohl, Kartoffeln vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'flei05', name: 'Putengeschnetzeltes mit Reis', type: 'meat', ingredients: ["meat","onion","cream","rice"], steps: 'Wurst & Fleisch kräftig anbraten, Zwiebeln zugeben, mit Paprika bzw. Gewürzen bestäuben, ablöschen und mit Zwiebeln, Sahne, Reis 60–90 Minuten schmoren lassen.' },
+  { id: 'flei06', name: 'Lammkeule mit Bohnen', type: 'meat', ingredients: ["meat","beans","potatoes","onion"], steps: 'Wurst & Fleisch würzen, scharf anbraten und im Ofen bei ca. 160–180°C gar ziehen lassen, dazu Bohnen (getrocknet), Kartoffeln, Zwiebeln zubereiten.' },
+  { id: 'flei07', name: 'Wildschweingulasch', type: 'meat', ingredients: ["meat","onion","vegetables","paprika","potatoes"], steps: 'Wurst & Fleisch kräftig anbraten, Zwiebeln zugeben, mit Paprika bzw. Gewürzen bestäuben, ablöschen und mit Zwiebeln, Gemüse, Paprikapulver, Kartoffeln 60–90 Minuten schmoren lassen.' },
+  { id: 'flei08', name: 'Hirschragout', type: 'meat', ingredients: ["meat","onion","vegetables","cream"], steps: 'Wurst & Fleisch kräftig anbraten, Zwiebeln zugeben, mit Paprika bzw. Gewürzen bestäuben, ablöschen und mit Zwiebeln, Gemüse, Sahne 60–90 Minuten schmoren lassen.' },
+  { id: 'flei09', name: 'Kalbsschnitzel Wiener Art', type: 'meat', ingredients: ["meat","eggs","breadcrumbs","flour","lemon"], steps: 'Wurst & Fleisch klopfen bzw. in Portionen teilen, in Mehl, Ei und Paniermehl wenden und in heißem Fett goldbraun braten.' },
+  { id: 'flei10', name: 'Königsberger Klopse', type: 'meat', ingredients: ["meat","onion","breadcrumbs","eggs","capers","cream"], steps: 'Wurst & Fleisch, Zwiebeln, Semmelbrösel vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'flei11', name: 'Kohlrouladen', type: 'meat', ingredients: ["meat","cabbage","onion","breadcrumbs"], steps: 'Füllung aus Kohl, Zwiebeln, Semmelbrösel zubereiten, in Wurst & Fleisch einrollen, feststecken und in Brühe ca. 60–90 Minuten schmoren lassen.' },
+  { id: 'flei12', name: 'Leberkäse mit Spiegelei', type: 'meat', ingredients: ["meat","eggs","potatoes"], steps: 'Wurst & Fleisch, Eier, Kartoffeln vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'flei13', name: 'Bratwurst mit Sauerkraut', type: 'meat', ingredients: ["meat","cabbage","potatoes"], steps: 'Wurst & Fleisch, Kohl, Kartoffeln vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'flei14', name: 'Nürnberger Rostbratwürste', type: 'meat', ingredients: ["meat","cabbage","breadcrumbs"], steps: 'Wurst & Fleisch, Kohl, Semmelbrösel vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'flei15', name: 'Schweinshaxe mit Knödeln', type: 'meat', ingredients: ["meat","potatoes","cabbage"], steps: 'Wurst & Fleisch würzen, scharf anbraten und im Ofen bei ca. 160–180°C gar ziehen lassen, dazu Kartoffeln, Kohl zubereiten.' },
+  { id: 'flei16', name: 'Rinderroulade mit Klößen', type: 'meat', ingredients: ["meat","potatoes","onion","gherkin"], steps: 'Wurst & Fleisch, Kartoffeln, Zwiebeln vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'flei17', name: 'Gyros mit Tzatziki', type: 'meat', ingredients: ["meat","cucumber","onion","oil"], steps: 'Wurst & Fleisch, Gurken, Zwiebeln vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'flei18', name: 'Hähnchencurry mit Reis', type: 'meat', ingredients: ["meat","onion","coconutmilk","curry","rice"], steps: 'Zwiebeln andünsten, Wurst & Fleisch zugeben, mit Currypulver würzen, mit Kokosmilch ablöschen und 15–20 Minuten köcheln lassen.' },
+  { id: 'flei19', name: 'Chili con Carne', type: 'meat', ingredients: ["meat","beans","tomato","onion","chiliflakes"], steps: 'Wurst & Fleisch, Bohnen (getrocknet), Tomaten vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'flei20', name: 'Ungarisches Gulasch', type: 'meat', ingredients: ["meat","onion","bellpepper","paprika","potatoes"], steps: 'Wurst & Fleisch kräftig anbraten, Zwiebeln zugeben, mit Paprika bzw. Gewürzen bestäuben, ablöschen und mit Zwiebeln, Paprika (frisch), Paprikapulver, Kartoffeln 60–90 Minuten schmoren lassen.' },
+  { id: 'flei21', name: 'Jägerschnitzel mit Champignonsoße', type: 'meat', ingredients: ["meat","mushrooms","cream","onion"], steps: 'Wurst & Fleisch klopfen bzw. in Portionen teilen, in Mehl, Ei und Paniermehl wenden und in heißem Fett goldbraun braten.' },
+  { id: 'flei22', name: 'Zwiebelrostbraten', type: 'meat', ingredients: ["meat","onion","potatoes"], steps: 'Wurst & Fleisch würzen, scharf anbraten und im Ofen bei ca. 160–180°C gar ziehen lassen, dazu Zwiebeln, Kartoffeln zubereiten.' },
+  { id: 'flei23', name: 'Hackbraten', type: 'meat', ingredients: ["meat","onion","breadcrumbs","eggs"], steps: 'Wurst & Fleisch würzen, scharf anbraten und im Ofen bei ca. 160–180°C gar ziehen lassen, dazu Zwiebeln, Semmelbrösel, Eier zubereiten.' },
+  { id: 'flei24', name: 'Sauerkraut mit Speck', type: 'meat', ingredients: ["meat","cabbage","potatoes"], steps: 'Wurst & Fleisch, Kohl, Kartoffeln vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'flei25', name: 'Erbseneintopf mit Wurst', type: 'meat', ingredients: ["meat","peas","potatoes","carrot"], steps: 'Zwiebeln (falls vorhanden) andünsten, Wurst & Fleisch, Erbsen zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'flei26', name: 'Weißkohleintopf mit Speck', type: 'meat', ingredients: ["meat","cabbage","potatoes"], steps: 'Zwiebeln (falls vorhanden) andünsten, Wurst & Fleisch, Kohl zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'flei27', name: 'Krautwickel', type: 'meat', ingredients: ["meat","cabbage","onion","rice"], steps: 'Füllung aus Kohl, Zwiebeln, Reis zubereiten, in Wurst & Fleisch einrollen, feststecken und in Brühe ca. 60–90 Minuten schmoren lassen.' },
+  { id: 'flei28', name: 'Ente à l’Orange', type: 'meat', ingredients: ["meat","lemon","onion","potatoes"], steps: 'Wurst & Fleisch, Zitrone, Zwiebeln vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'flei29', name: 'Putenbrust mit Kräuterkruste', type: 'meat', ingredients: ["meat","herbs_general","breadcrumbs","potatoes"], steps: 'Wurst & Fleisch, Frische Kräuter, Semmelbrösel vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'flei30', name: 'Hähnchenspieße mit Paprika', type: 'meat', ingredients: ["meat","bellpepper","onion","oil"], steps: 'Wurst & Fleisch, Paprika (frisch), Zwiebeln vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'flei31', name: 'Schweinemedaillons mit Pilzrahmsoße', type: 'meat', ingredients: ["meat","mushrooms","cream","onion"], steps: 'Wurst & Fleisch, Pilze, Sahne vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'flei32', name: 'Rinderfilet mit Kräuterbutter', type: 'meat', ingredients: ["meat","butter","herbs_general","potatoes"], steps: 'Wurst & Fleisch, Butter, Frische Kräuter vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'flei33', name: 'Gänsebraten mit Klößen', type: 'meat', ingredients: ["meat","potatoes","cabbage"], steps: 'Wurst & Fleisch würzen, scharf anbraten und im Ofen bei ca. 160–180°C gar ziehen lassen, dazu Kartoffeln, Kohl zubereiten.' },
+  { id: 'flei34', name: 'Kaninchenragout', type: 'meat', ingredients: ["meat","onion","vegetables","cream"], steps: 'Wurst & Fleisch kräftig anbraten, Zwiebeln zugeben, mit Paprika bzw. Gewürzen bestäuben, ablöschen und mit Zwiebeln, Gemüse, Sahne 60–90 Minuten schmoren lassen.' },
+  { id: 'flei35', name: 'Wildschweinbraten mit Preiselbeeren', type: 'meat', ingredients: ["meat","jam","potatoes","onion"], steps: 'Wurst & Fleisch würzen, scharf anbraten und im Ofen bei ca. 160–180°C gar ziehen lassen, dazu Marmelade, Kartoffeln, Zwiebeln zubereiten.' },
+  { id: 'flei36', name: 'Rehrücken mit Spätzle', type: 'meat', ingredients: ["meat","pasta","cream","onion"], steps: 'Wurst & Fleisch, Nudeln, Sahne vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'flei37', name: 'Lammkoteletts mit Rosmarinkartoffeln', type: 'meat', ingredients: ["meat","potatoes","herbs_general"], steps: 'Wurst & Fleisch, Kartoffeln, Frische Kräuter vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'flei38', name: 'Hühnerfrikassee', type: 'meat', ingredients: ["meat","cream","vegetables","peas"], steps: 'Wurst & Fleisch kräftig anbraten, Zwiebeln zugeben, mit Paprika bzw. Gewürzen bestäuben, ablöschen und mit Sahne, Gemüse, Erbsen 60–90 Minuten schmoren lassen.' },
+  { id: 'flei39', name: 'Bœuf Bourguignon', type: 'meat', ingredients: ["meat","onion","carrot","mushrooms"], steps: 'Wurst & Fleisch kräftig anbraten, Zwiebeln zugeben, mit Paprika bzw. Gewürzen bestäuben, ablöschen und mit Zwiebeln, Karotten, Pilze 60–90 Minuten schmoren lassen.' },
+  { id: 'flei40', name: 'Chicken Tikka Masala', type: 'meat', ingredients: ["meat","tomato","cream","onion","curry","rice"], steps: 'Wurst & Fleisch kräftig anbraten, Zwiebeln zugeben, mit Paprika bzw. Gewürzen bestäuben, ablöschen und mit Tomaten, Sahne, Zwiebeln, Currypulver, Reis 60–90 Minuten schmoren lassen.' },
+  { id: 'flei41', name: 'Döner-Pfanne', type: 'meat', ingredients: ["meat","onion","bellpepper","tomato"], steps: 'Wurst & Fleisch, Zwiebeln, Paprika (frisch) klein schneiden, in einer heißen Pfanne oder im Wok kurz scharf anbraten und würzen.' },
+  { id: 'flei42', name: 'Cevapcici mit Ajvar', type: 'meat', ingredients: ["meat","bellpepper","onion","oil"], steps: 'Wurst & Fleisch, Paprika (frisch), Zwiebeln vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'flei43', name: 'Schweineschnitzel Cordon Bleu', type: 'meat', ingredients: ["meat","cheese","eggs","breadcrumbs","flour"], steps: 'Wurst & Fleisch klopfen bzw. in Portionen teilen, in Mehl, Ei und Paniermehl wenden und in heißem Fett goldbraun braten.' },
+  { id: 'flei44', name: 'Hackfleischauflauf', type: 'meat', ingredients: ["meat","pasta","cheese","cream"], steps: 'Wurst & Fleisch, Nudeln schichten bzw. vorbereiten, mit Sahne übergießen und bei 180°C ca. 25–30 Minuten überbacken.' },
+  { id: 'flei45', name: 'Kartoffel-Hackfleisch-Auflauf', type: 'meat', ingredients: ["meat","potatoes","cheese","cream"], steps: 'Wurst & Fleisch, Kartoffeln schichten bzw. vorbereiten, mit Sahne übergießen und bei 180°C ca. 25–30 Minuten überbacken.' },
+  { id: 'flei46', name: 'Bami Goreng mit Hähnchen', type: 'meat', ingredients: ["meat","pasta","bellpepper","soysauce","onion"], steps: 'Wurst & Fleisch, Nudeln, Paprika (frisch) klein schneiden, in einer heißen Pfanne oder im Wok kurz scharf anbraten und würzen.' },
+  { id: 'flei47', name: 'Nasi Goreng mit Rind', type: 'meat', ingredients: ["meat","rice","bellpepper","soysauce","onion"], steps: 'Wurst & Fleisch, Reis, Paprika (frisch) klein schneiden, in einer heißen Pfanne oder im Wok kurz scharf anbraten und würzen.' },
+  { id: 'flei48', name: 'Rindersteak mit Kräuterbutter', type: 'meat', ingredients: ["meat","butter","herbs_general","potatoes"], steps: 'Wurst & Fleisch, Butter, Frische Kräuter vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'flei49', name: 'Schweinefilet im Speckmantel', type: 'meat', ingredients: ["meat","cream","potatoes"], steps: 'Wurst & Fleisch, Sahne, Kartoffeln vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'flei50', name: 'Putenrouladen', type: 'meat', ingredients: ["meat","cheese","onion","breadcrumbs"], steps: 'Füllung aus Käse, Zwiebeln, Semmelbrösel zubereiten, in Wurst & Fleisch einrollen, feststecken und in Brühe ca. 60–90 Minuten schmoren lassen.' },
+  { id: 'flei51', name: 'Hähnchenbrust in Sahnesoße', type: 'meat', ingredients: ["meat","cream","mushrooms","potatoes"], steps: 'Wurst & Fleisch, Sahne, Pilze vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'flei52', name: 'Lammeintopf mit Gemüse', type: 'meat', ingredients: ["meat","vegetables","potatoes","carrot"], steps: 'Zwiebeln (falls vorhanden) andünsten, Wurst & Fleisch, Gemüse zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'flei53', name: 'Speckknödel', type: 'meat', ingredients: ["meat","potatoes","breadcrumbs","eggs"], steps: 'Wurst & Fleisch, Kartoffeln, Semmelbrösel vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'flei54', name: 'Grünkohl mit Pinkel', type: 'meat', ingredients: ["meat","cabbage","potatoes"], steps: 'Wurst & Fleisch, Kohl, Kartoffeln vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'flei55', name: 'Labskaus', type: 'meat', ingredients: ["meat","potatoes","gherkin","eggs"], steps: 'Wurst & Fleisch, Kartoffeln, Gewürzgurken vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'flei56', name: 'Himmel und Erde mit Blutwurst', type: 'meat', ingredients: ["meat","potatoes","apple","onion"], steps: 'Wurst & Fleisch, Kartoffeln, Äpfel vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'flei57', name: 'Rippchen mit Sauerkraut', type: 'meat', ingredients: ["meat","cabbage","potatoes"], steps: 'Wurst & Fleisch würzen, scharf anbraten und im Ofen bei ca. 160–180°C gar ziehen lassen, dazu Kohl, Kartoffeln zubereiten.' },
+  { id: 'flei58', name: 'Eisbein mit Erbspüree', type: 'meat', ingredients: ["meat","peas","potatoes"], steps: 'Wurst & Fleisch würzen, scharf anbraten und im Ofen bei ca. 160–180°C gar ziehen lassen, dazu Erbsen, Kartoffeln zubereiten.' },
+  { id: 'flei59', name: 'Falscher Hase', type: 'meat', ingredients: ["meat","eggs","breadcrumbs","onion"], steps: 'Wurst & Fleisch, Eier, Semmelbrösel vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'flei60', name: 'Frikadellen in Soße', type: 'meat', ingredients: ["meat","onion","cream","breadcrumbs"], steps: 'Wurst & Fleisch, Zwiebeln, Sahne vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'flei61', name: 'Rinderrouladen mit Rotkohl', type: 'meat', ingredients: ["meat","cabbage","gherkin","onion"], steps: 'Füllung aus Kohl, Gewürzgurken, Zwiebeln zubereiten, in Wurst & Fleisch einrollen, feststecken und in Brühe ca. 60–90 Minuten schmoren lassen.' },
+  { id: 'flei62', name: 'Currywurst mit Pommes', type: 'meat', ingredients: ["meat","curry","ketchup","potatoes"], steps: 'Zwiebeln andünsten, Wurst & Fleisch zugeben, mit Currypulver würzen, mit Kokosmilch ablöschen und 15–20 Minuten köcheln lassen.' },
+  { id: 'flei63', name: 'Bratenklößchen-Suppe', type: 'meat', ingredients: ["meat","potatoes","carrot","vegetables"], steps: 'Zwiebeln (falls vorhanden) andünsten, Wurst & Fleisch, Kartoffeln zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'flei64', name: 'Fleischküchle', type: 'meat', ingredients: ["meat","onion","breadcrumbs","eggs"], steps: 'Wurst & Fleisch reiben oder klein schneiden, mit Zwiebeln, Semmelbrösel, Eier vermengen und in einer Pfanne von beiden Seiten goldbraun braten.' },
+  { id: 'flei65', name: 'Rindergulasch mit Spätzle', type: 'meat', ingredients: ["meat","onion","pasta","paprika"], steps: 'Wurst & Fleisch kräftig anbraten, Zwiebeln zugeben, mit Paprika bzw. Gewürzen bestäuben, ablöschen und mit Zwiebeln, Nudeln, Paprikapulver 60–90 Minuten schmoren lassen.' },
+  { id: 'flei66', name: 'Schweinegulasch mit Nudeln', type: 'meat', ingredients: ["meat","onion","pasta","paprika"], steps: 'Wurst & Fleisch kräftig anbraten, Zwiebeln zugeben, mit Paprika bzw. Gewürzen bestäuben, ablöschen und mit Zwiebeln, Nudeln, Paprikapulver 60–90 Minuten schmoren lassen.' },
+  { id: 'flei67', name: 'Wildgulasch mit Rotwein', type: 'meat', ingredients: ["meat","onion","vegetables","paprika"], steps: 'Wurst & Fleisch kräftig anbraten, Zwiebeln zugeben, mit Paprika bzw. Gewürzen bestäuben, ablöschen und mit Zwiebeln, Gemüse, Paprikapulver 60–90 Minuten schmoren lassen.' },
+  { id: 'flei68', name: 'Geflügelfrikassee', type: 'meat', ingredients: ["meat","cream","peas","vegetables"], steps: 'Wurst & Fleisch kräftig anbraten, Zwiebeln zugeben, mit Paprika bzw. Gewürzen bestäuben, ablöschen und mit Sahne, Erbsen, Gemüse 60–90 Minuten schmoren lassen.' },
+  { id: 'flei69', name: 'Entenkeulen mit Blaukraut', type: 'meat', ingredients: ["meat","cabbage","potatoes"], steps: 'Wurst & Fleisch würzen, scharf anbraten und im Ofen bei ca. 160–180°C gar ziehen lassen, dazu Kohl, Kartoffeln zubereiten.' },
+  { id: 'flei70', name: 'Putengulasch', type: 'meat', ingredients: ["meat","onion","bellpepper","paprika"], steps: 'Wurst & Fleisch kräftig anbraten, Zwiebeln zugeben, mit Paprika bzw. Gewürzen bestäuben, ablöschen und mit Zwiebeln, Paprika (frisch), Paprikapulver 60–90 Minuten schmoren lassen.' },
+  { id: 'flei71', name: 'Hackbällchen in Tomatensoße', type: 'meat', ingredients: ["meat","tomato","onion","pasta"], steps: 'Wurst & Fleisch, Tomaten, Zwiebeln vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'flei72', name: 'Cordon Bleu vom Schwein', type: 'meat', ingredients: ["meat","cheese","eggs","breadcrumbs"], steps: 'Wurst & Fleisch klopfen bzw. in Portionen teilen, in Mehl, Ei und Paniermehl wenden und in heißem Fett goldbraun braten.' },
+  { id: 'flei73', name: 'Kasseler mit Sauerkraut', type: 'meat', ingredients: ["meat","cabbage","potatoes"], steps: 'Wurst & Fleisch würzen, scharf anbraten und im Ofen bei ca. 160–180°C gar ziehen lassen, dazu Kohl, Kartoffeln zubereiten.' },
+  { id: 'flei74', name: 'Kohlroulade mit Hackfleisch', type: 'meat', ingredients: ["meat","cabbage","rice","onion"], steps: 'Füllung aus Kohl, Reis, Zwiebeln zubereiten, in Wurst & Fleisch einrollen, feststecken und in Brühe ca. 60–90 Minuten schmoren lassen.' },
+  { id: 'flei75', name: 'Rindfleischsalat', type: 'meat', ingredients: ["meat","gherkin","onion","oil","vinegar"], steps: 'Wurst & Fleisch, Gewürzgurken, Zwiebeln klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'flei76', name: 'Wurstsalat', type: 'meat', ingredients: ["meat","gherkin","onion","oil","vinegar"], steps: 'Wurst & Fleisch, Gewürzgurken, Zwiebeln klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'flei77', name: 'Schweinebäckchen in Rotweinsoße', type: 'meat', ingredients: ["meat","onion","carrot","cream"], steps: 'Wurst & Fleisch kräftig anbraten, Zwiebeln zugeben, mit Paprika bzw. Gewürzen bestäuben, ablöschen und mit Zwiebeln, Karotten, Sahne 60–90 Minuten schmoren lassen.' },
+  { id: 'flei78', name: 'Ochsenschwanzsuppe', type: 'meat', ingredients: ["meat","carrot","celery","onion"], steps: 'Zwiebeln (falls vorhanden) andünsten, Wurst & Fleisch, Karotten zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'flei79', name: 'Gulaschsuppe', type: 'meat', ingredients: ["meat","onion","bellpepper","paprika","potatoes"], steps: 'Zwiebeln (falls vorhanden) andünsten, Wurst & Fleisch, Zwiebeln zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'flei80', name: 'Fleischsalat mit Ei', type: 'meat', ingredients: ["meat","eggs","gherkin","oil"], steps: 'Wurst & Fleisch, Eier, Gewürzgurken klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'flei81', name: 'Zigeunerschnitzel', type: 'meat', ingredients: ["meat","bellpepper","tomato","breadcrumbs"], steps: 'Wurst & Fleisch klopfen bzw. in Portionen teilen, in Mehl, Ei und Paniermehl wenden und in heißem Fett goldbraun braten.' },
+  { id: 'flei82', name: 'Paprikaschnitzel', type: 'meat', ingredients: ["meat","bellpepper","breadcrumbs","cream"], steps: 'Wurst & Fleisch klopfen bzw. in Portionen teilen, in Mehl, Ei und Paniermehl wenden und in heißem Fett goldbraun braten.' },
+  { id: 'flei83', name: 'Rahmschnitzel', type: 'meat', ingredients: ["meat","cream","mushrooms","breadcrumbs"], steps: 'Wurst & Fleisch klopfen bzw. in Portionen teilen, in Mehl, Ei und Paniermehl wenden und in heißem Fett goldbraun braten.' },
+  { id: 'flei84', name: 'Zwiebelschnitzel', type: 'meat', ingredients: ["meat","onion","breadcrumbs","cream"], steps: 'Wurst & Fleisch klopfen bzw. in Portionen teilen, in Mehl, Ei und Paniermehl wenden und in heißem Fett goldbraun braten.' },
+  { id: 'flei85', name: 'Bierbraten vom Rind', type: 'meat', ingredients: ["meat","onion","potatoes","cream"], steps: 'Wurst & Fleisch würzen, scharf anbraten und im Ofen bei ca. 160–180°C gar ziehen lassen, dazu Zwiebeln, Kartoffeln, Sahne zubereiten.' },
+  { id: 'flei86', name: 'Lammcurry', type: 'meat', ingredients: ["meat","coconutmilk","curry","onion","rice"], steps: 'Zwiebeln andünsten, Wurst & Fleisch zugeben, mit Currypulver würzen, mit Kokosmilch ablöschen und 15–20 Minuten köcheln lassen.' },
+  { id: 'flei87', name: 'Hähnchen süß-sauer', type: 'meat', ingredients: ["meat","bellpepper","corn","rice"], steps: 'Wurst & Fleisch, Paprika (frisch), Mais klein schneiden, in einer heißen Pfanne oder im Wok kurz scharf anbraten und würzen.' },
+  // ==================== VEGETARISCH (100) ====================
+  { id: 'kartoffelsalat', name: 'Kartoffelsalat', type: 'vegetarian', ingredients: ["potatoes","onion","vinegar","oil","eggs"], steps: 'Kartoffeln, Zwiebeln, Essig klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'kaesespaetzle', name: 'Käsespätzle', type: 'vegetarian', ingredients: ["pasta","cheese","onion"], steps: 'Nudeln, Käse, Zwiebeln vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'kartoffelpuffer', name: 'Kartoffelpuffer', type: 'vegetarian', ingredients: ["potatoes","onion","eggs","flour"], steps: 'Kartoffeln reiben oder klein schneiden, mit Zwiebeln, Eier, Mehl vermengen und in einer Pfanne von beiden Seiten goldbraun braten.' },
+  { id: 'kuerbissuppe', name: 'Kürbissuppe', type: 'vegetarian', ingredients: ["pumpkin","vegetables","cream","onion"], steps: 'Zwiebeln (falls vorhanden) andünsten, Kürbis, Gemüse zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'pilzpfanne', name: 'Pilzpfanne', type: 'vegetarian', ingredients: ["mushrooms","onion","cream","butter"], steps: 'Pilze, Zwiebeln, Sahne klein schneiden, in einer heißen Pfanne oder im Wok kurz scharf anbraten und würzen.' },
+  { id: 'kraeuterquark', name: 'Kräuterquark mit Kartoffeln', type: 'vegetarian', ingredients: ["quark","herbs_general","potatoes"], steps: 'Quark, Frische Kräuter, Kartoffeln vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'baerlauchpesto', name: 'Bärlauch-Pesto-Nudeln', type: 'vegetarian', ingredients: ["wildgarlic","pasta","cheese","walnut","oil"], steps: 'Bärlauch, Nudeln, Käse vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg01', name: 'Gemüselasagne', type: 'vegetarian', ingredients: ["pasta","cheese","cream","vegetables"], steps: 'Nudeln, Käse schichten bzw. vorbereiten, mit Gemüse übergießen und bei 180°C ca. 25–30 Minuten überbacken.' },
+  { id: 'veg02', name: 'Käsespätzle mit Röstzwiebeln', type: 'vegetarian', ingredients: ["pasta","cheese","onion"], steps: 'Nudeln, Käse, Zwiebeln vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg03', name: 'Kartoffelgratin', type: 'vegetarian', ingredients: ["potatoes","cream","cheese","nutmeg"], steps: 'Kartoffeln, Sahne schichten bzw. vorbereiten, mit Muskat übergießen und bei 180°C ca. 25–30 Minuten überbacken.' },
+  { id: 'veg04', name: 'Blumenkohlauflauf', type: 'vegetarian', ingredients: ["cauliflower","cheese","cream"], steps: 'Blumenkohl, Käse schichten bzw. vorbereiten, mit Sahne übergießen und bei 180°C ca. 25–30 Minuten überbacken.' },
+  { id: 'veg05', name: 'Brokkoliauflauf mit Käse', type: 'vegetarian', ingredients: ["broccoli","cheese","cream"], steps: 'Brokkoli, Käse schichten bzw. vorbereiten, mit Sahne übergießen und bei 180°C ca. 25–30 Minuten überbacken.' },
+  { id: 'veg06', name: 'Spinat-Feta-Quiche', type: 'vegetarian', ingredients: ["spinach","cheese","eggs","flour","butter"], steps: 'Spinat, Käse schichten bzw. vorbereiten, mit Butter übergießen und bei 180°C ca. 25–30 Minuten überbacken.' },
+  { id: 'veg07', name: 'Zwiebelkuchen', type: 'vegetarian', ingredients: ["onion","eggs","cream","flour"], steps: 'Zwiebeln, Eier, Sahne vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg08', name: 'Käse-Lauch-Suppe', type: 'vegetarian', ingredients: ["leek","cheese","cream","potatoes"], steps: 'Zwiebeln (falls vorhanden) andünsten, Lauch, Käse zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'veg09', name: 'Kürbis-Gnocchi', type: 'vegetarian', ingredients: ["pumpkin","cheese","butter"], steps: 'Kürbis, Käse schichten bzw. vorbereiten, mit Butter übergießen und bei 180°C ca. 25–30 Minuten überbacken.' },
+  { id: 'veg10', name: 'Ratatouille mit Käse überbacken', type: 'vegetarian', ingredients: ["zucchini","eggplant","tomato","bellpepper","cheese"], steps: 'Zucchini, Aubergine, Tomaten vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg11', name: 'Gemüsestrudel', type: 'vegetarian', ingredients: ["vegetables","flour","cheese","butter"], steps: 'Gemüse, Mehl, Käse vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg12', name: 'Spätzle mit Linsen und Spiegelei', type: 'vegetarian', ingredients: ["pasta","lentils","eggs","onion"], steps: 'Nudeln, Linsen, Eier vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg13', name: 'Kartoffel-Käse-Puffer', type: 'vegetarian', ingredients: ["potatoes","cheese","eggs","flour"], steps: 'Kartoffeln reiben oder klein schneiden, mit Käse, Eier, Mehl vermengen und in einer Pfanne von beiden Seiten goldbraun braten.' },
+  { id: 'veg14', name: 'Gemüsequiche', type: 'vegetarian', ingredients: ["vegetables","eggs","flour","cheese","butter"], steps: 'Gemüse, Eier schichten bzw. vorbereiten, mit Butter übergießen und bei 180°C ca. 25–30 Minuten überbacken.' },
+  { id: 'veg15', name: 'Tomaten-Mozzarella-Salat', type: 'vegetarian', ingredients: ["tomato","cheese","oil"], steps: 'Tomaten, Käse, Öl klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'veg16', name: 'Griechischer Salat mit Feta', type: 'vegetarian', ingredients: ["tomato","cucumber","cheese","oil"], steps: 'Tomaten, Gurken, Käse klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'veg17', name: 'Caprese-Salat', type: 'vegetarian', ingredients: ["tomato","cheese","oil"], steps: 'Tomaten, Käse, Öl klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'veg18', name: 'Spargel mit Sauce Hollandaise', type: 'vegetarian', ingredients: ["vegetables","butter","eggs","lemon"], steps: 'Gemüse, Butter, Eier vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg19', name: 'Spargelsalat mit Ei', type: 'vegetarian', ingredients: ["vegetables","eggs","oil","vinegar"], steps: 'Gemüse, Eier, Öl klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'veg20', name: 'Rührei mit Bärlauch', type: 'vegetarian', ingredients: ["eggs","wildgarlic","butter"], steps: 'Eier reiben oder klein schneiden, mit Bärlauch, Butter vermengen und in einer Pfanne von beiden Seiten goldbraun braten.' },
+  { id: 'veg21', name: 'Omelette mit Kräutern', type: 'vegetarian', ingredients: ["eggs","herbs_general","butter"], steps: 'Eier reiben oder klein schneiden, mit Frische Kräuter, Butter vermengen und in einer Pfanne von beiden Seiten goldbraun braten.' },
+  { id: 'veg22', name: 'Käseomelette', type: 'vegetarian', ingredients: ["eggs","cheese","butter"], steps: 'Eier reiben oder klein schneiden, mit Käse, Butter vermengen und in einer Pfanne von beiden Seiten goldbraun braten.' },
+  { id: 'veg23', name: 'Gemüseomelette', type: 'vegetarian', ingredients: ["eggs","vegetables","butter"], steps: 'Eier reiben oder klein schneiden, mit Gemüse, Butter vermengen und in einer Pfanne von beiden Seiten goldbraun braten.' },
+  { id: 'veg24', name: 'Zucchini-Puffer', type: 'vegetarian', ingredients: ["zucchini","eggs","flour"], steps: 'Zucchini reiben oder klein schneiden, mit Eier, Mehl vermengen und in einer Pfanne von beiden Seiten goldbraun braten.' },
+  { id: 'veg25', name: 'Möhren-Ingwer-Suppe', type: 'vegetarian', ingredients: ["carrot","ginger","cream"], steps: 'Zwiebeln (falls vorhanden) andünsten, Karotten, Ingwer zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'veg26', name: 'Sellerieschnitzel', type: 'vegetarian', ingredients: ["celery","eggs","breadcrumbs","flour"], steps: 'Sellerie klopfen bzw. in Portionen teilen, in Mehl, Ei und Paniermehl wenden und in heißem Fett goldbraun braten.' },
+  { id: 'veg27', name: 'Blumenkohlschnitzel', type: 'vegetarian', ingredients: ["cauliflower","eggs","breadcrumbs","flour"], steps: 'Blumenkohl klopfen bzw. in Portionen teilen, in Mehl, Ei und Paniermehl wenden und in heißem Fett goldbraun braten.' },
+  { id: 'veg28', name: 'Käsesuppe', type: 'vegetarian', ingredients: ["cheese","cream","potatoes"], steps: 'Zwiebeln (falls vorhanden) andünsten, Käse, Sahne zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'veg29', name: 'Zwiebelsuppe mit Käse überbacken', type: 'vegetarian', ingredients: ["onion","cheese","cream"], steps: 'Zwiebeln (falls vorhanden) andünsten, Zwiebeln, Käse zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'veg30', name: 'Grüne-Bohnen-Auflauf', type: 'vegetarian', ingredients: ["greenbeans","cheese","cream","potatoes"], steps: 'Grüne Bohnen, Käse schichten bzw. vorbereiten, mit Kartoffeln übergießen und bei 180°C ca. 25–30 Minuten überbacken.' },
+  { id: 'veg31', name: 'Erbsen-Käse-Risotto', type: 'vegetarian', ingredients: ["peas","rice","cheese"], steps: 'Zwiebeln andünsten, Reis glasig anschwitzen, nach und nach mit Brühe ablöschen und unter Rühren garen, zum Schluss Käse unterrühren.' },
+  { id: 'veg32', name: 'Pilzrisotto', type: 'vegetarian', ingredients: ["mushrooms","rice","cheese","onion"], steps: 'Zwiebeln andünsten, Reis glasig anschwitzen, nach und nach mit Brühe ablöschen und unter Rühren garen, zum Schluss Zwiebeln unterrühren.' },
+  { id: 'veg33', name: 'Pilzrahmsoße mit Spätzle', type: 'vegetarian', ingredients: ["mushrooms","cream","pasta"], steps: 'Pilze, Sahne, Nudeln vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg34', name: 'Käsespätzle mit Bärlauch', type: 'vegetarian', ingredients: ["pasta","cheese","wildgarlic"], steps: 'Nudeln, Käse, Bärlauch vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg35', name: 'Kürbiscremesuppe mit Kernen', type: 'vegetarian', ingredients: ["pumpkin","cream","almonds"], steps: 'Kürbis mit Zucker erhitzen, Sahne, Mandeln einrühren, kurz köcheln lassen und kalt stellen, bis die Masse fest wird.' },
+  { id: 'veg36', name: 'Gemüsecurry mit Joghurt', type: 'vegetarian', ingredients: ["vegetables","curry","cream","rice"], steps: 'Zwiebeln andünsten, Gemüse zugeben, mit Currypulver würzen, mit Kokosmilch ablöschen und 15–20 Minuten köcheln lassen.' },
+  { id: 'veg37', name: 'Kartoffel-Gemüse-Frittata', type: 'vegetarian', ingredients: ["potatoes","eggs","vegetables"], steps: 'Kartoffeln reiben oder klein schneiden, mit Eier, Gemüse vermengen und in einer Pfanne von beiden Seiten goldbraun braten.' },
+  { id: 'veg38', name: 'Spinat-Ricotta-Ravioli', type: 'vegetarian', ingredients: ["spinach","cheese","pasta"], steps: 'Spinat, Käse, Nudeln vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg39', name: 'Käse-Sahne-Sauce mit Nudeln', type: 'vegetarian', ingredients: ["cheese","cream","pasta"], steps: 'Käse, Sahne, Nudeln vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg40', name: 'Bratkartoffeln mit Spiegelei', type: 'vegetarian', ingredients: ["potatoes","eggs","onion"], steps: 'Kartoffeln, Eier, Zwiebeln vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg41', name: 'Ofengemüse mit Feta', type: 'vegetarian', ingredients: ["vegetables","cheese","oil"], steps: 'Gemüse, Käse, Öl vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg42', name: 'Gemüsepfanne mit Ei', type: 'vegetarian', ingredients: ["vegetables","eggs","onion"], steps: 'Gemüse, Eier, Zwiebeln klein schneiden, in einer heißen Pfanne oder im Wok kurz scharf anbraten und würzen.' },
+  { id: 'veg43', name: 'Gefüllte Paprika mit Käse', type: 'vegetarian', ingredients: ["bellpepper","cheese","rice"], steps: 'Paprika (frisch), Käse, Reis vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg44', name: 'Gefüllte Zucchini mit Feta', type: 'vegetarian', ingredients: ["zucchini","cheese","rice"], steps: 'Zucchini, Käse, Reis vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg45', name: 'Kohlrabi-Auflauf', type: 'vegetarian', ingredients: ["cabbage","cream","cheese"], steps: 'Kohl, Sahne schichten bzw. vorbereiten, mit Käse übergießen und bei 180°C ca. 25–30 Minuten überbacken.' },
+  { id: 'veg46', name: 'Rote-Bete-Salat mit Ziegenkäse', type: 'vegetarian', ingredients: ["vegetables","cheese","oil"], steps: 'Gemüse, Käse, Öl klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'veg47', name: 'Zucchini-Lasagne', type: 'vegetarian', ingredients: ["zucchini","pasta","cheese","cream"], steps: 'Zucchini, Nudeln schichten bzw. vorbereiten, mit Sahne übergießen und bei 180°C ca. 25–30 Minuten überbacken.' },
+  { id: 'veg48', name: 'Auberginen-Parmigiana', type: 'vegetarian', ingredients: ["eggplant","cheese","tomato"], steps: 'Aubergine, Käse, Tomaten vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg49', name: 'Käsefondue', type: 'vegetarian', ingredients: ["cheese","flour"], steps: 'Käse schmelzen bzw. erhitzen und mit Mehl servieren.' },
+  { id: 'veg50', name: 'Raclette mit Gemüse', type: 'vegetarian', ingredients: ["cheese","potatoes","vegetables"], steps: 'Käse schmelzen bzw. erhitzen und mit Kartoffeln, Gemüse servieren.' },
+  { id: 'veg51', name: 'Flammkuchen mit Käse und Zwiebeln', type: 'vegetarian', ingredients: ["flour","cream","onion","cheese"], steps: 'Mehl, Sahne, Zwiebeln vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg52', name: 'Pilzauflauf mit Käse', type: 'vegetarian', ingredients: ["mushrooms","cheese","cream"], steps: 'Pilze, Käse schichten bzw. vorbereiten, mit Sahne übergießen und bei 180°C ca. 25–30 Minuten überbacken.' },
+  { id: 'veg53', name: 'Bärlauch-Butter-Nudeln mit Parmesan', type: 'vegetarian', ingredients: ["wildgarlic","pasta","cheese","butter"], steps: 'Bärlauch, Nudeln, Käse vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg54', name: 'Rucola-Salat mit Parmesan', type: 'vegetarian', ingredients: ["vegetables","cheese","oil"], steps: 'Gemüse, Käse, Öl klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'veg55', name: 'Gebackener Camembert mit Preiselbeeren', type: 'vegetarian', ingredients: ["cheese","jam","breadcrumbs"], steps: 'Käse, Marmelade, Semmelbrösel vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg56', name: 'Ofenkartoffel mit Kräuterquark', type: 'vegetarian', ingredients: ["potatoes","quark","herbs_general"], steps: 'Kartoffeln, Quark, Frische Kräuter vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg57', name: 'Rosenkohl mit Käsesoße', type: 'vegetarian', ingredients: ["vegetables","cheese","cream"], steps: 'Gemüse, Käse, Sahne vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg58', name: 'Wirsingauflauf', type: 'vegetarian', ingredients: ["cabbage","cream","cheese"], steps: 'Kohl, Sahne schichten bzw. vorbereiten, mit Käse übergießen und bei 180°C ca. 25–30 Minuten überbacken.' },
+  { id: 'veg59', name: 'Kohlrabi-Puffer', type: 'vegetarian', ingredients: ["cabbage","eggs","flour"], steps: 'Kohl reiben oder klein schneiden, mit Eier, Mehl vermengen und in einer Pfanne von beiden Seiten goldbraun braten.' },
+  { id: 'veg60', name: 'Eiereinlaufsuppe', type: 'vegetarian', ingredients: ["eggs","vegetablebroth","carrot"], steps: 'Zwiebeln (falls vorhanden) andünsten, Eier, Gemüsebrühe zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'veg61', name: 'Nudelsalat mit Käse', type: 'vegetarian', ingredients: ["pasta","cheese","oil"], steps: 'Nudeln, Käse, Öl klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'veg62', name: 'Kartoffelsalat mit Ei', type: 'vegetarian', ingredients: ["potatoes","eggs","oil","vinegar"], steps: 'Kartoffeln, Eier, Öl klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'veg63', name: 'Kürbissuppe mit Sahne', type: 'vegetarian', ingredients: ["pumpkin","cream","onion"], steps: 'Zwiebeln (falls vorhanden) andünsten, Kürbis, Sahne zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'veg64', name: 'Bärlauchsuppe', type: 'vegetarian', ingredients: ["wildgarlic","cream","potatoes"], steps: 'Zwiebeln (falls vorhanden) andünsten, Bärlauch, Sahne zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'veg65', name: 'Wildkräutersalat mit Feta', type: 'vegetarian', ingredients: ["herbs_general","cheese","oil"], steps: 'Frische Kräuter, Käse, Öl klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'veg66', name: 'Löwenzahnsalat mit Ei', type: 'vegetarian', ingredients: ["herbs_general","eggs","oil"], steps: 'Frische Kräuter, Eier, Öl klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'veg67', name: 'Rote-Linsen-Suppe mit Sahne', type: 'vegetarian', ingredients: ["lentils","cream","carrot"], steps: 'Zwiebeln (falls vorhanden) andünsten, Linsen, Sahne zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'veg68', name: 'Kartoffel-Käse-Suppe', type: 'vegetarian', ingredients: ["potatoes","cheese","cream"], steps: 'Zwiebeln (falls vorhanden) andünsten, Kartoffeln, Käse zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'veg69', name: 'Gemüsebrühe mit Eierstich', type: 'vegetarian', ingredients: ["vegetablebroth","eggs","carrot"], steps: 'Gemüsebrühe, Eier, Karotten vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg70', name: 'Zucchini-Frittata', type: 'vegetarian', ingredients: ["zucchini","eggs","cheese"], steps: 'Zucchini reiben oder klein schneiden, mit Eier, Käse vermengen und in einer Pfanne von beiden Seiten goldbraun braten.' },
+  { id: 'veg71', name: 'Spargelcremesuppe', type: 'vegetarian', ingredients: ["vegetables","cream","butter"], steps: 'Gemüse mit Zucker erhitzen, Sahne, Butter einrühren, kurz köcheln lassen und kalt stellen, bis die Masse fest wird.' },
+  { id: 'veg72', name: 'Pilzsuppe', type: 'vegetarian', ingredients: ["mushrooms","cream","onion"], steps: 'Zwiebeln (falls vorhanden) andünsten, Pilze, Sahne zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'veg73', name: 'Käse-Nudel-Auflauf', type: 'vegetarian', ingredients: ["pasta","cheese","cream"], steps: 'Nudeln, Käse schichten bzw. vorbereiten, mit Sahne übergießen und bei 180°C ca. 25–30 Minuten überbacken.' },
+  { id: 'veg74', name: 'Kartoffelknödel mit Pilzsoße', type: 'vegetarian', ingredients: ["potatoes","mushrooms","cream"], steps: 'Kartoffeln, Pilze, Sahne vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg75', name: 'Semmelknödel mit Pilzen', type: 'vegetarian', ingredients: ["breadcrumbs","eggs","mushrooms"], steps: 'Semmelbrösel, Eier, Pilze vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg76', name: 'Grießknödel in Gemüsebrühe', type: 'vegetarian', ingredients: ["flour","eggs","vegetablebroth"], steps: 'Mehl, Eier, Gemüsebrühe vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg77', name: 'Kürbisrisotto', type: 'vegetarian', ingredients: ["pumpkin","rice","cheese"], steps: 'Zwiebeln andünsten, Reis glasig anschwitzen, nach und nach mit Brühe ablöschen und unter Rühren garen, zum Schluss Käse unterrühren.' },
+  { id: 'veg78', name: 'Rotkohl mit Apfel und Käsespätzle', type: 'vegetarian', ingredients: ["cabbage","apple","pasta","cheese"], steps: 'Kohl, Äpfel, Nudeln vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg79', name: 'Käse-Kartoffel-Puffer', type: 'vegetarian', ingredients: ["potatoes","cheese","eggs"], steps: 'Kartoffeln reiben oder klein schneiden, mit Käse, Eier vermengen und in einer Pfanne von beiden Seiten goldbraun braten.' },
+  { id: 'veg80', name: 'Gemüseküchle', type: 'vegetarian', ingredients: ["vegetables","eggs","flour"], steps: 'Gemüse reiben oder klein schneiden, mit Eier, Mehl vermengen und in einer Pfanne von beiden Seiten goldbraun braten.' },
+  { id: 'veg81', name: 'Pilzgulasch mit Sahne', type: 'vegetarian', ingredients: ["mushrooms","onion","cream","paprika"], steps: 'Pilze kräftig anbraten, Zwiebeln zugeben, mit Paprika bzw. Gewürzen bestäuben, ablöschen und mit Zwiebeln, Sahne, Paprikapulver 60–90 Minuten schmoren lassen.' },
+  { id: 'veg82', name: 'Bohnensalat mit Ei', type: 'vegetarian', ingredients: ["greenbeans","eggs","oil","vinegar"], steps: 'Grüne Bohnen, Eier, Öl klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'veg83', name: 'Kartoffel-Lauch-Gratin', type: 'vegetarian', ingredients: ["potatoes","leek","cream","cheese"], steps: 'Kartoffeln, Lauch schichten bzw. vorbereiten, mit Käse übergießen und bei 180°C ca. 25–30 Minuten überbacken.' },
+  { id: 'veg84', name: 'Blumenkohl-Käse-Suppe', type: 'vegetarian', ingredients: ["cauliflower","cheese","cream"], steps: 'Zwiebeln (falls vorhanden) andünsten, Blumenkohl, Käse zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'veg85', name: 'Kürbiskuchen herzhaft mit Feta', type: 'vegetarian', ingredients: ["pumpkin","cheese","flour","eggs"], steps: 'Kürbis, Käse, Mehl vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg86', name: 'Bärlauch-Frittata', type: 'vegetarian', ingredients: ["wildgarlic","eggs","cheese"], steps: 'Bärlauch reiben oder klein schneiden, mit Eier, Käse vermengen und in einer Pfanne von beiden Seiten goldbraun braten.' },
+  { id: 'veg87', name: 'Zucchini-Käse-Laibchen', type: 'vegetarian', ingredients: ["zucchini","cheese","eggs","breadcrumbs"], steps: 'Zucchini reiben oder klein schneiden, mit Käse, Eier, Semmelbrösel vermengen und in einer Pfanne von beiden Seiten goldbraun braten.' },
+  { id: 'veg88', name: 'Karotten-Auflauf mit Käse', type: 'vegetarian', ingredients: ["carrot","cheese","cream"], steps: 'Karotten, Käse schichten bzw. vorbereiten, mit Sahne übergießen und bei 180°C ca. 25–30 Minuten überbacken.' },
+  { id: 'veg89', name: 'Gemüsesuppe mit Ei', type: 'vegetarian', ingredients: ["vegetables","eggs","potatoes"], steps: 'Zwiebeln (falls vorhanden) andünsten, Gemüse, Eier zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'veg90', name: 'Wirsingroulade mit Käsefüllung', type: 'vegetarian', ingredients: ["cabbage","cheese","rice"], steps: 'Kohl, Käse, Reis vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg91', name: 'Kartoffel-Sellerie-Stampf', type: 'vegetarian', ingredients: ["potatoes","celery","butter","cream"], steps: 'Kartoffeln, Sellerie, Butter vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'veg92', name: 'Brokkoli-Käse-Suppe', type: 'vegetarian', ingredients: ["broccoli","cheese","cream"], steps: 'Zwiebeln (falls vorhanden) andünsten, Brokkoli, Käse zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'veg93', name: 'Rahmwirsing mit Kartoffeln', type: 'vegetarian', ingredients: ["cabbage","cream","potatoes"], steps: 'Kohl, Sahne, Kartoffeln vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  // ==================== VEGAN (100) ====================
+  { id: 'vgn01', name: 'Linsencurry mit Reis', type: 'vegan', ingredients: ["lentils","onion","curry","rice","coconutmilk"], steps: 'Zwiebeln andünsten, Linsen zugeben, mit Currypulver würzen, mit Kokosmilch ablöschen und 15–20 Minuten köcheln lassen.' },
+  { id: 'vgn02', name: 'Kichererbsencurry mit Tomaten', type: 'vegan', ingredients: ["chickpeas","tomato","curry","onion","cumin"], steps: 'Zwiebeln andünsten, Kichererbsen zugeben, mit Currypulver würzen, mit Kokosmilch ablöschen und 15–20 Minuten köcheln lassen.' },
+  { id: 'vgn03', name: 'Falafel mit Hummus', type: 'vegan', ingredients: ["chickpeas","oil","lemon"], steps: 'Kichererbsen garen bzw. pürieren, mit Öl, Zitrone zu einer cremigen Masse verarbeiten und abschmecken.' },
+  { id: 'vgn04', name: 'Gemüse-Couscous', type: 'vegan', ingredients: ["couscous","vegetables","oil"], steps: 'Couscous, Gemüse, Öl vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'vgn05', name: 'Tofu-Gemüse-Pfanne', type: 'vegan', ingredients: ["tofu","vegetables","soysauce"], steps: 'Tofu, Gemüse, Sojasoße klein schneiden, in einer heißen Pfanne oder im Wok kurz scharf anbraten und würzen.' },
+  { id: 'vgn06', name: 'Veganes Chili sin Carne', type: 'vegan', ingredients: ["beans","tomato","onion","chiliflakes"], steps: 'Bohnen (getrocknet), Tomaten, Zwiebeln vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'vgn07', name: 'Rote-Linsen-Dal', type: 'vegan', ingredients: ["lentils","curry","onion","coconutmilk"], steps: 'Linsen garen bzw. pürieren, mit Currypulver, Zwiebeln, Kokosmilch zu einer cremigen Masse verarbeiten und abschmecken.' },
+  { id: 'vgn08', name: 'Gemüsecurry mit Kokosmilch', type: 'vegan', ingredients: ["vegetables","coconutmilk","curry","rice"], steps: 'Zwiebeln andünsten, Gemüse zugeben, mit Currypulver würzen, mit Kokosmilch ablöschen und 15–20 Minuten köcheln lassen.' },
+  { id: 'vgn09', name: 'Tofu-Curry mit Reis', type: 'vegan', ingredients: ["tofu","coconutmilk","curry","rice"], steps: 'Zwiebeln andünsten, Tofu zugeben, mit Currypulver würzen, mit Kokosmilch ablöschen und 15–20 Minuten köcheln lassen.' },
+  { id: 'vgn10', name: 'Gebratener Reis mit Gemüse', type: 'vegan', ingredients: ["rice","vegetables","soysauce"], steps: 'Reis würzen, scharf anbraten und im Ofen bei ca. 160–180°C gar ziehen lassen, dazu Gemüse, Sojasoße zubereiten.' },
+  { id: 'vgn11', name: 'Süß-saure Gemüsepfanne', type: 'vegan', ingredients: ["vegetables","corn","bellpepper","soysauce"], steps: 'Gemüse, Mais, Paprika (frisch) klein schneiden, in einer heißen Pfanne oder im Wok kurz scharf anbraten und würzen.' },
+  { id: 'vgn12', name: 'Ofengemüse mit Kräutern', type: 'vegan', ingredients: ["vegetables","oil","herbs_general"], steps: 'Gemüse, Öl, Frische Kräuter vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'vgn13', name: 'Vegane Kartoffel-Lauch-Suppe', type: 'vegan', ingredients: ["potatoes","leek","soymilk"], steps: 'Zwiebeln (falls vorhanden) andünsten, Kartoffeln, Lauch zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'vgn14', name: 'Vegane Kürbissuppe', type: 'vegan', ingredients: ["pumpkin","vegetablebroth","coconutmilk"], steps: 'Zwiebeln (falls vorhanden) andünsten, Kürbis, Gemüsebrühe zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'vgn15', name: 'Möhren-Ingwer-Suppe (vegan)', type: 'vegan', ingredients: ["carrot","ginger","vegetablebroth"], steps: 'Zwiebeln (falls vorhanden) andünsten, Karotten, Ingwer zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'vgn16', name: 'Vegane Linsensuppe', type: 'vegan', ingredients: ["lentils","potatoes","vegetablebroth"], steps: 'Zwiebeln (falls vorhanden) andünsten, Linsen, Kartoffeln zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'vgn17', name: 'Vegane Erbsensuppe', type: 'vegan', ingredients: ["peas","potatoes","vegetablebroth"], steps: 'Zwiebeln (falls vorhanden) andünsten, Erbsen, Kartoffeln zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'vgn18', name: 'Vegane Bohnensuppe', type: 'vegan', ingredients: ["beans","potatoes","vegetablebroth"], steps: 'Zwiebeln (falls vorhanden) andünsten, Bohnen (getrocknet), Kartoffeln zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'vgn19', name: 'Ratatouille', type: 'vegan', ingredients: ["zucchini","eggplant","tomato","bellpepper"], steps: 'Zucchini, Aubergine, Tomaten vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'vgn20', name: 'Veganer Gemüseeintopf', type: 'vegan', ingredients: ["vegetables","potatoes","vegetablebroth"], steps: 'Zwiebeln (falls vorhanden) andünsten, Gemüse, Kartoffeln zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'vgn21', name: 'Veganer Nudelsalat', type: 'vegan', ingredients: ["pasta","tomato","cucumber","oil"], steps: 'Nudeln, Tomaten, Gurken klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'vgn22', name: 'Veganer Kartoffelsalat', type: 'vegan', ingredients: ["potatoes","onion","oil","vinegar"], steps: 'Kartoffeln, Zwiebeln, Öl klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'vgn23', name: 'Rohkostsalat mit Tahini-Dressing', type: 'vegan', ingredients: ["carrot","cabbage","tahini"], steps: 'Karotten, Kohl, Tahini klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'vgn24', name: 'Couscous-Salat mit Gemüse', type: 'vegan', ingredients: ["couscous","tomato","cucumber","oil"], steps: 'Couscous, Tomaten, Gurken klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'vgn25', name: 'Linsensalat mit Tomaten', type: 'vegan', ingredients: ["lentils","tomato","onion","oil"], steps: 'Linsen, Tomaten, Zwiebeln klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'vgn26', name: 'Ofenkartoffel mit Kräuteröl', type: 'vegan', ingredients: ["potatoes","oil","herbs_general"], steps: 'Kartoffeln, Öl, Frische Kräuter vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'vgn27', name: 'Blumenkohl-Kichererbsen-Curry', type: 'vegan', ingredients: ["cauliflower","chickpeas","curry","coconutmilk"], steps: 'Zwiebeln andünsten, Blumenkohl zugeben, mit Currypulver würzen, mit Kokosmilch ablöschen und 15–20 Minuten köcheln lassen.' },
+  { id: 'vgn28', name: 'Veganer Burger mit Kichererbsen', type: 'vegan', ingredients: ["chickpeas","onion","oats"], steps: 'Kichererbsen, Zwiebeln, Haferflocken vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'vgn29', name: 'Gemüsespieße vom Grill', type: 'vegan', ingredients: ["vegetables","bellpepper","oil"], steps: 'Gemüse, Paprika (frisch), Öl vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'vgn30', name: 'Auberginen-Curry mit Kokosmilch', type: 'vegan', ingredients: ["eggplant","coconutmilk","curry","onion"], steps: 'Zwiebeln andünsten, Aubergine zugeben, mit Currypulver würzen, mit Kokosmilch ablöschen und 15–20 Minuten köcheln lassen.' },
+  { id: 'vgn31', name: 'Zucchini-Nudeln mit Tomatensoße', type: 'vegan', ingredients: ["zucchini","tomato","garlic","oil"], steps: 'Zucchini, Tomaten, Knoblauch vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'vgn32', name: 'Vollkornnudeln mit Tomatensoße', type: 'vegan', ingredients: ["pasta","tomato","garlic","oil"], steps: 'Nudeln, Tomaten, Knoblauch vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'vgn33', name: 'Vegane Pilzpfanne', type: 'vegan', ingredients: ["mushrooms","onion","margarine"], steps: 'Pilze, Zwiebeln, Margarine (pflanzlich) klein schneiden, in einer heißen Pfanne oder im Wok kurz scharf anbraten und würzen.' },
+  { id: 'vgn34', name: 'Veganes Pilzrisotto', type: 'vegan', ingredients: ["mushrooms","rice","onion","vegetablebroth"], steps: 'Zwiebeln andünsten, Reis glasig anschwitzen, nach und nach mit Brühe ablöschen und unter Rühren garen, zum Schluss Gemüsebrühe unterrühren.' },
+  { id: 'vgn35', name: 'Veganes Gemüserisotto', type: 'vegan', ingredients: ["vegetables","rice","vegetablebroth"], steps: 'Zwiebeln andünsten, Reis glasig anschwitzen, nach und nach mit Brühe ablöschen und unter Rühren garen, zum Schluss Gemüsebrühe unterrühren.' },
+  { id: 'vgn36', name: 'Vegane Kartoffelpuffer', type: 'vegan', ingredients: ["potatoes","onion","flour"], steps: 'Kartoffeln reiben oder klein schneiden, mit Zwiebeln, Mehl vermengen und in einer Pfanne von beiden Seiten goldbraun braten.' },
+  { id: 'vgn37', name: 'Veganes Bärlauchpesto', type: 'vegan', ingredients: ["wildgarlic","oil","walnut"], steps: 'Bärlauch, Öl, Walnüsse vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'vgn38', name: 'Wildkräutersalat mit Zitronendressing', type: 'vegan', ingredients: ["herbs_general","lemon","oil"], steps: 'Frische Kräuter, Zitrone, Öl klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'vgn39', name: 'Löwenzahnsalat mit Ölvinaigrette', type: 'vegan', ingredients: ["herbs_general","oil","vinegar"], steps: 'Frische Kräuter, Öl, Essig klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'vgn40', name: 'Vegane Brennnesselsuppe', type: 'vegan', ingredients: ["herbs_general","vegetablebroth","potatoes"], steps: 'Zwiebeln (falls vorhanden) andünsten, Frische Kräuter, Gemüsebrühe zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'vgn41', name: 'Gebratener Grünkohl mit Knoblauch', type: 'vegan', ingredients: ["cabbage","garlic","oil"], steps: 'Kohl würzen, scharf anbraten und im Ofen bei ca. 160–180°C gar ziehen lassen, dazu Knoblauch, Öl zubereiten.' },
+  { id: 'vgn42', name: 'Rotkohl mit Apfel', type: 'vegan', ingredients: ["cabbage","apple","vinegar"], steps: 'Kohl, Äpfel, Essig vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'vgn43', name: 'Sauerkraut mit Kartoffeln', type: 'vegan', ingredients: ["cabbage","potatoes","oil"], steps: 'Kohl, Kartoffeln, Öl vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'vgn44', name: 'Kartoffel-Erbsen-Curry', type: 'vegan', ingredients: ["potatoes","peas","curry"], steps: 'Zwiebeln andünsten, Kartoffeln zugeben, mit Currypulver würzen, mit Kokosmilch ablöschen und 15–20 Minuten köcheln lassen.' },
+  { id: 'vgn45', name: 'Veganes Gemüsecurry mit Reis', type: 'vegan', ingredients: ["vegetables","curry","rice","coconutmilk"], steps: 'Zwiebeln andünsten, Gemüse zugeben, mit Currypulver würzen, mit Kokosmilch ablöschen und 15–20 Minuten köcheln lassen.' },
+  { id: 'vgn46', name: 'Falafel-Wrap', type: 'vegan', ingredients: ["chickpeas","cucumber","tomato"], steps: 'Kichererbsen garen bzw. pürieren, mit Gurken, Tomaten zu einer cremigen Masse verarbeiten und abschmecken.' },
+  { id: 'vgn47', name: 'Hummus mit Gemüsesticks', type: 'vegan', ingredients: ["chickpeas","garlic","oil"], steps: 'Kichererbsen garen bzw. pürieren, mit Knoblauch, Öl zu einer cremigen Masse verarbeiten und abschmecken.' },
+  { id: 'vgn48', name: 'Baba Ganoush mit Fladenbrot', type: 'vegan', ingredients: ["eggplant","tahini","garlic"], steps: 'Aubergine garen bzw. pürieren, mit Tahini, Knoblauch zu einer cremigen Masse verarbeiten und abschmecken.' },
+  { id: 'vgn49', name: 'Gemüse-Tajine', type: 'vegan', ingredients: ["vegetables","tomato","cumin"], steps: 'Gemüse, Tomaten, Kreuzkümmel vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'vgn50', name: 'Veganes Ratatouille mit Couscous', type: 'vegan', ingredients: ["zucchini","eggplant","tomato","couscous"], steps: 'Zucchini, Aubergine, Tomaten vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'vgn51', name: 'Linsenbolognese mit Nudeln', type: 'vegan', ingredients: ["lentils","tomato","pasta","onion"], steps: 'Linsen, Tomaten, Nudeln vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'vgn52', name: 'Kichererbsen-Spinat-Curry', type: 'vegan', ingredients: ["chickpeas","spinach","curry"], steps: 'Zwiebeln andünsten, Kichererbsen zugeben, mit Currypulver würzen, mit Kokosmilch ablöschen und 15–20 Minuten köcheln lassen.' },
+  { id: 'vgn53', name: 'Gebratener Tofu mit Gemüse', type: 'vegan', ingredients: ["tofu","vegetables","soysauce"], steps: 'Tofu würzen, scharf anbraten und im Ofen bei ca. 160–180°C gar ziehen lassen, dazu Gemüse, Sojasoße zubereiten.' },
+  { id: 'vgn54', name: 'Tofu-Spieße vom Grill', type: 'vegan', ingredients: ["tofu","bellpepper","oil"], steps: 'Tofu, Paprika (frisch), Öl vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'vgn55', name: 'Veganer Kartoffel-Gemüse-Auflauf', type: 'vegan', ingredients: ["potatoes","vegetables","oatmilk"], steps: 'Kartoffeln, Gemüse schichten bzw. vorbereiten, mit Hafermilch übergießen und bei 180°C ca. 25–30 Minuten überbacken.' },
+  { id: 'vgn56', name: 'Gemüsebrühe-Nudelsuppe', type: 'vegan', ingredients: ["pasta","vegetablebroth","vegetables"], steps: 'Zwiebeln (falls vorhanden) andünsten, Nudeln, Gemüsebrühe zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'vgn57', name: 'Kürbis-Kichererbsen-Curry', type: 'vegan', ingredients: ["pumpkin","chickpeas","curry"], steps: 'Zwiebeln andünsten, Kürbis zugeben, mit Currypulver würzen, mit Kokosmilch ablöschen und 15–20 Minuten köcheln lassen.' },
+  { id: 'vgn58', name: 'Vegane Rote-Bete-Salat', type: 'vegan', ingredients: ["vegetables","oil","vinegar"], steps: 'Gemüse, Öl, Essig klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'vgn59', name: 'Apfel-Rotkohl-Salat', type: 'vegan', ingredients: ["cabbage","apple","oil"], steps: 'Kohl, Äpfel, Öl klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'vgn60', name: 'Gurken-Tomaten-Salat', type: 'vegan', ingredients: ["cucumber","tomato","onion","oil"], steps: 'Gurken, Tomaten, Zwiebeln klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'vgn61', name: 'Veganer Nudelauflauf', type: 'vegan', ingredients: ["pasta","tomato","vegetables"], steps: 'Nudeln, Tomaten schichten bzw. vorbereiten, mit Gemüse übergießen und bei 180°C ca. 25–30 Minuten überbacken.' },
+  { id: 'vgn62', name: 'Gemüsepfanne mit Tahinisoße', type: 'vegan', ingredients: ["vegetables","tahini","onion"], steps: 'Gemüse, Tahini, Zwiebeln klein schneiden, in einer heißen Pfanne oder im Wok kurz scharf anbraten und würzen.' },
+  { id: 'vgn63', name: 'Vegane Bratkartoffeln', type: 'vegan', ingredients: ["potatoes","onion","oil"], steps: 'Kartoffeln, Zwiebeln, Öl vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'vgn64', name: 'Kartoffel-Gemüse-Pfanne', type: 'vegan', ingredients: ["potatoes","vegetables","oil"], steps: 'Kartoffeln, Gemüse, Öl klein schneiden, in einer heißen Pfanne oder im Wok kurz scharf anbraten und würzen.' },
+  { id: 'vgn65', name: 'Veganer Kürbiseintopf', type: 'vegan', ingredients: ["pumpkin","potatoes","vegetablebroth"], steps: 'Zwiebeln (falls vorhanden) andünsten, Kürbis, Kartoffeln zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'vgn66', name: 'Kichererbsen-Curry mit Spinat und Kokos', type: 'vegan', ingredients: ["chickpeas","spinach","coconutmilk"], steps: 'Zwiebeln andünsten, Kichererbsen zugeben, mit Currypulver würzen, mit Kokosmilch ablöschen und 15–20 Minuten köcheln lassen.' },
+  { id: 'vgn67', name: 'Vegane Zucchini-Puffer', type: 'vegan', ingredients: ["zucchini","onion","flour"], steps: 'Zucchini reiben oder klein schneiden, mit Zwiebeln, Mehl vermengen und in einer Pfanne von beiden Seiten goldbraun braten.' },
+  { id: 'vgn68', name: 'Asiatische Gemüsepfanne', type: 'vegan', ingredients: ["vegetables","bellpepper","soysauce"], steps: 'Gemüse, Paprika (frisch), Sojasoße klein schneiden, in einer heißen Pfanne oder im Wok kurz scharf anbraten und würzen.' },
+  { id: 'vgn69', name: 'Gemüse-Wok mit Sojasoße', type: 'vegan', ingredients: ["vegetables","soysauce","ginger"], steps: 'Gemüse, Sojasoße, Ingwer klein schneiden, in einer heißen Pfanne oder im Wok kurz scharf anbraten und würzen.' },
+  { id: 'vgn70', name: 'Veganes Pad Thai', type: 'vegan', ingredients: ["rice","vegetables","tahini"], steps: 'Reis, Gemüse, Tahini klein schneiden, in einer heißen Pfanne oder im Wok kurz scharf anbraten und würzen.' },
+  { id: 'vgn71', name: 'Gebratener Reis mit Tofu', type: 'vegan', ingredients: ["rice","tofu","soysauce"], steps: 'Reis würzen, scharf anbraten und im Ofen bei ca. 160–180°C gar ziehen lassen, dazu Tofu, Sojasoße zubereiten.' },
+  { id: 'vgn72', name: 'Veganer Kichererbsensalat', type: 'vegan', ingredients: ["chickpeas","cucumber","tomato","oil"], steps: 'Kichererbsen, Gurken, Tomaten klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'vgn73', name: 'Bohnensalat mit Zwiebeln', type: 'vegan', ingredients: ["beans","onion","vinegar"], steps: 'Bohnen (getrocknet), Zwiebeln, Essig klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'vgn74', name: 'Veganer Linsensalat', type: 'vegan', ingredients: ["lentils","cucumber","tomato","oil"], steps: 'Linsen, Gurken, Tomaten klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'vgn75', name: 'Kartoffel-Lauch-Puffer', type: 'vegan', ingredients: ["potatoes","leek","flour"], steps: 'Kartoffeln reiben oder klein schneiden, mit Lauch, Mehl vermengen und in einer Pfanne von beiden Seiten goldbraun braten.' },
+  { id: 'vgn76', name: 'Vegane Gemüse-Curry-Suppe', type: 'vegan', ingredients: ["vegetables","curry","vegetablebroth"], steps: 'Zwiebeln (falls vorhanden) andünsten, Gemüse, Currypulver zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'vgn77', name: 'Rote-Linsen-Suppe mit Kokosmilch', type: 'vegan', ingredients: ["lentils","coconutmilk","curry"], steps: 'Zwiebeln (falls vorhanden) andünsten, Linsen, Kokosmilch zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'vgn78', name: 'Veganer Gemüseburger', type: 'vegan', ingredients: ["chickpeas","onion","oats"], steps: 'Kichererbsen, Zwiebeln, Haferflocken vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'vgn79', name: 'Veganes Pilzgulasch', type: 'vegan', ingredients: ["mushrooms","onion","paprika"], steps: 'Pilze kräftig anbraten, Zwiebeln zugeben, mit Paprika bzw. Gewürzen bestäuben, ablöschen und mit Zwiebeln, Paprikapulver 60–90 Minuten schmoren lassen.' },
+  { id: 'vgn80', name: 'Blumenkohl-Curry', type: 'vegan', ingredients: ["cauliflower","curry","coconutmilk"], steps: 'Zwiebeln andünsten, Blumenkohl zugeben, mit Currypulver würzen, mit Kokosmilch ablöschen und 15–20 Minuten köcheln lassen.' },
+  { id: 'vgn81', name: 'Brokkoli-Curry', type: 'vegan', ingredients: ["broccoli","curry","coconutmilk"], steps: 'Zwiebeln andünsten, Brokkoli zugeben, mit Currypulver würzen, mit Kokosmilch ablöschen und 15–20 Minuten köcheln lassen.' },
+  { id: 'vgn82', name: 'Veganes Kürbisrisotto', type: 'vegan', ingredients: ["pumpkin","rice","vegetablebroth"], steps: 'Zwiebeln andünsten, Reis glasig anschwitzen, nach und nach mit Brühe ablöschen und unter Rühren garen, zum Schluss Gemüsebrühe unterrühren.' },
+  { id: 'vgn83', name: 'Wildkräuter-Bowl mit Kichererbsen', type: 'vegan', ingredients: ["herbs_general","chickpeas","oil"], steps: 'Frische Kräuter, Kichererbsen, Öl vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'vgn84', name: 'Beerensalat mit Limette', type: 'vegan', ingredients: ["raspberry","currant","lime"], steps: 'Himbeeren, Johannisbeeren, Limette klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'vgn85', name: 'Veganer Kartoffelbrei', type: 'vegan', ingredients: ["potatoes","oatmilk","margarine"], steps: 'Kartoffeln, Hafermilch, Margarine (pflanzlich) vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'vgn86', name: 'Gebratenes Gemüse mit Sesam', type: 'vegan', ingredients: ["vegetables","oil","herbs_general"], steps: 'Gemüse würzen, scharf anbraten und im Ofen bei ca. 160–180°C gar ziehen lassen, dazu Öl, Frische Kräuter zubereiten.' },
+  { id: 'vgn87', name: 'Vegane Rotkohlsalat', type: 'vegan', ingredients: ["cabbage","vinegar","oil"], steps: 'Kohl, Essig, Öl klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'vgn88', name: 'Gurkensalat mit Kräutern', type: 'vegan', ingredients: ["cucumber","herbs_general","oil"], steps: 'Gurken, Frische Kräuter, Öl klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'vgn89', name: 'Tomatensalat mit Zwiebeln', type: 'vegan', ingredients: ["tomato","onion","oil"], steps: 'Tomaten, Zwiebeln, Öl klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'vgn90', name: 'Veganer Linseneintopf', type: 'vegan', ingredients: ["lentils","potatoes","vegetables"], steps: 'Zwiebeln (falls vorhanden) andünsten, Linsen, Kartoffeln zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'vgn91', name: 'Möhren-Curry mit Kokosmilch', type: 'vegan', ingredients: ["carrot","coconutmilk","curry"], steps: 'Zwiebeln andünsten, Karotten zugeben, mit Currypulver würzen, mit Kokosmilch ablöschen und 15–20 Minuten köcheln lassen.' },
+  { id: 'vgn92', name: 'Kartoffel-Kichererbsen-Curry', type: 'vegan', ingredients: ["potatoes","chickpeas","curry"], steps: 'Zwiebeln andünsten, Kartoffeln zugeben, mit Currypulver würzen, mit Kokosmilch ablöschen und 15–20 Minuten köcheln lassen.' },
+  { id: 'vgn93', name: 'Veganer Gemüsestrudel', type: 'vegan', ingredients: ["vegetables","flour","oil"], steps: 'Gemüse, Mehl, Öl vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'vgn94', name: 'Blumenkohl-Kichererbsen-Bowl', type: 'vegan', ingredients: ["cauliflower","chickpeas","tahini"], steps: 'Blumenkohl, Kichererbsen, Tahini vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'vgn95', name: 'Veganer Bohneneintopf', type: 'vegan', ingredients: ["beans","potatoes","vegetables"], steps: 'Zwiebeln (falls vorhanden) andünsten, Bohnen (getrocknet), Kartoffeln zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'vgn96', name: 'Wildkräuter-Kichererbsen-Salat', type: 'vegan', ingredients: ["herbs_general","chickpeas","oil"], steps: 'Frische Kräuter, Kichererbsen, Öl klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'vgn97', name: 'Gebratener Kohl mit Zwiebeln', type: 'vegan', ingredients: ["cabbage","onion","oil"], steps: 'Kohl würzen, scharf anbraten und im Ofen bei ca. 160–180°C gar ziehen lassen, dazu Zwiebeln, Öl zubereiten.' },
+  { id: 'vgn98', name: 'Vegane Kürbis-Kokos-Suppe', type: 'vegan', ingredients: ["pumpkin","coconutmilk","vegetablebroth"], steps: 'Zwiebeln (falls vorhanden) andünsten, Kürbis, Kokosmilch zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'vgn99', name: 'Sellerie-Curry mit Kokosmilch', type: 'vegan', ingredients: ["celery","coconutmilk","curry"], steps: 'Zwiebeln andünsten, Sellerie zugeben, mit Currypulver würzen, mit Kokosmilch ablöschen und 15–20 Minuten köcheln lassen.' },
+  { id: 'vgn100', name: 'Veganer Wirsingeintopf', type: 'vegan', ingredients: ["cabbage","potatoes","vegetablebroth"], steps: 'Zwiebeln (falls vorhanden) andünsten, Kohl, Kartoffeln zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  // ==================== FISCH (50) ====================
+  { id: 'fisch01', name: 'Gebratene Forelle mit Mandelbutter', type: 'fish', ingredients: ["fish","almonds","butter"], steps: 'Fisch würzen, scharf anbraten und im Ofen bei ca. 160–180°C gar ziehen lassen, dazu Mandeln, Butter zubereiten.' },
+  { id: 'fisch02', name: 'Forelle Müllerin Art', type: 'fish', ingredients: ["fish","flour","butter","lemon"], steps: 'Fisch, Mehl, Butter vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'fisch03', name: 'Karpfen blau', type: 'fish', ingredients: ["fish","vinegar","vegetables"], steps: 'Fisch, Essig, Gemüse vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'fisch04', name: 'Backfisch mit Kartoffelsalat', type: 'fish', ingredients: ["fish","breadcrumbs","potatoes"], steps: 'Fisch klopfen bzw. in Portionen teilen, in Mehl, Ei und Paniermehl wenden und in heißem Fett goldbraun braten.' },
+  { id: 'fisch05', name: 'Fischfrikadellen', type: 'fish', ingredients: ["fish","onion","eggs","breadcrumbs"], steps: 'Fisch, Zwiebeln, Eier vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'fisch06', name: 'Fischsuppe', type: 'fish', ingredients: ["fish","potatoes","vegetables","cream"], steps: 'Zwiebeln (falls vorhanden) andünsten, Fisch, Kartoffeln zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'fisch07', name: 'Räucherfisch mit Kartoffeln', type: 'fish', ingredients: ["fish","potatoes","butter"], steps: 'Fisch, Kartoffeln, Butter vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'fisch08', name: 'Fischauflauf mit Kartoffeln', type: 'fish', ingredients: ["fish","potatoes","cream","cheese"], steps: 'Fisch, Kartoffeln schichten bzw. vorbereiten, mit Käse übergießen und bei 180°C ca. 25–30 Minuten überbacken.' },
+  { id: 'fisch09', name: 'Fischcurry mit Reis', type: 'fish', ingredients: ["fish","curry","coconutmilk","rice"], steps: 'Zwiebeln andünsten, Fisch zugeben, mit Currypulver würzen, mit Kokosmilch ablöschen und 15–20 Minuten köcheln lassen.' },
+  { id: 'fisch10', name: 'Fisch süß-sauer', type: 'fish', ingredients: ["fish","bellpepper","corn","rice"], steps: 'Fisch, Paprika (frisch), Mais klein schneiden, in einer heißen Pfanne oder im Wok kurz scharf anbraten und würzen.' },
+  { id: 'fisch11', name: 'Fischgratin mit Käse', type: 'fish', ingredients: ["fish","cheese","cream"], steps: 'Fisch, Käse schichten bzw. vorbereiten, mit Sahne übergießen und bei 180°C ca. 25–30 Minuten überbacken.' },
+  { id: 'fisch12', name: 'Fischfilet in Zitronenbutter', type: 'fish', ingredients: ["fish","lemon","butter"], steps: 'Fisch, Zitrone, Butter vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'fisch13', name: 'Fischsalat', type: 'fish', ingredients: ["fish","gherkin","onion","oil"], steps: 'Fisch, Gewürzgurken, Zwiebeln klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'fisch14', name: 'Matjes mit Bratkartoffeln', type: 'fish', ingredients: ["fish","potatoes","onion"], steps: 'Fisch, Kartoffeln, Zwiebeln vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'fisch15', name: 'Fischfrikadellen mit Remoulade', type: 'fish', ingredients: ["fish","eggs","breadcrumbs","gherkin"], steps: 'Fisch, Eier, Semmelbrösel vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'fisch16', name: 'Karpfen gebacken', type: 'fish', ingredients: ["fish","breadcrumbs","butter"], steps: 'Fisch, Semmelbrösel, Butter vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'fisch17', name: 'Forellenfilet mit Gemüse', type: 'fish', ingredients: ["fish","vegetables","butter"], steps: 'Fisch, Gemüse, Butter vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'fisch18', name: 'Fischsuppe mit Gemüse', type: 'fish', ingredients: ["fish","vegetables","potatoes"], steps: 'Zwiebeln (falls vorhanden) andünsten, Fisch, Gemüse zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'fisch19', name: 'Fischeintopf', type: 'fish', ingredients: ["fish","potatoes","vegetables","carrot"], steps: 'Zwiebeln (falls vorhanden) andünsten, Fisch, Kartoffeln zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'fisch20', name: 'Fisch-Kartoffel-Auflauf', type: 'fish', ingredients: ["fish","potatoes","cream"], steps: 'Fisch, Kartoffeln schichten bzw. vorbereiten, mit Sahne übergießen und bei 180°C ca. 25–30 Minuten überbacken.' },
+  { id: 'fisch21', name: 'Geräucherte Forelle mit Meerrettich', type: 'fish', ingredients: ["fish","potatoes","cream"], steps: 'Fisch, Kartoffeln, Sahne vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'fisch22', name: 'Fischpfanne mit Zitrone', type: 'fish', ingredients: ["fish","lemon","butter","onion"], steps: 'Fisch, Zitrone, Butter klein schneiden, in einer heißen Pfanne oder im Wok kurz scharf anbraten und würzen.' },
+  { id: 'fisch23', name: 'Fischcurry mit Kokosmilch', type: 'fish', ingredients: ["fish","coconutmilk","curry","rice"], steps: 'Zwiebeln andünsten, Fisch zugeben, mit Currypulver würzen, mit Kokosmilch ablöschen und 15–20 Minuten köcheln lassen.' },
+  { id: 'fisch24', name: 'Panierter Fisch mit Kartoffelpüree', type: 'fish', ingredients: ["fish","breadcrumbs","potatoes","butter"], steps: 'Fisch klopfen bzw. in Portionen teilen, in Mehl, Ei und Paniermehl wenden und in heißem Fett goldbraun braten.' },
+  { id: 'fisch25', name: 'Fischspieße vom Grill', type: 'fish', ingredients: ["fish","bellpepper","oil"], steps: 'Fisch, Paprika (frisch), Öl vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'fisch26', name: 'Fischsuppe mit Sahne', type: 'fish', ingredients: ["fish","cream","vegetables"], steps: 'Zwiebeln (falls vorhanden) andünsten, Fisch, Sahne zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'fisch27', name: 'Fisch mit Kräuterkruste', type: 'fish', ingredients: ["fish","herbs_general","breadcrumbs"], steps: 'Fisch, Frische Kräuter, Semmelbrösel vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'fisch28', name: 'Fisch-Nudel-Auflauf', type: 'fish', ingredients: ["fish","pasta","cheese","cream"], steps: 'Fisch, Nudeln schichten bzw. vorbereiten, mit Sahne übergießen und bei 180°C ca. 25–30 Minuten überbacken.' },
+  { id: 'fisch29', name: 'Fisch-Gemüse-Pfanne', type: 'fish', ingredients: ["fish","vegetables","onion"], steps: 'Fisch, Gemüse, Zwiebeln klein schneiden, in einer heißen Pfanne oder im Wok kurz scharf anbraten und würzen.' },
+  { id: 'fisch30', name: 'Karpfen paniert', type: 'fish', ingredients: ["fish","breadcrumbs","eggs"], steps: 'Fisch klopfen bzw. in Portionen teilen, in Mehl, Ei und Paniermehl wenden und in heißem Fett goldbraun braten.' },
+  { id: 'fisch31', name: 'Forelle blau', type: 'fish', ingredients: ["fish","vinegar","butter"], steps: 'Fisch, Essig, Butter vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'fisch32', name: 'Fisch in Folie gegart', type: 'fish', ingredients: ["fish","lemon","vegetables"], steps: 'Fisch, Zitrone, Gemüse vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'fisch33', name: 'Fisch mit Senfsoße', type: 'fish', ingredients: ["fish","mustard","cream"], steps: 'Fisch, Senf, Sahne vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'fisch34', name: 'Fischfilet mit Spinat', type: 'fish', ingredients: ["fish","spinach","cream"], steps: 'Fisch, Spinat, Sahne vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'fisch35', name: 'Fisch-Reis-Pfanne', type: 'fish', ingredients: ["fish","rice","vegetables"], steps: 'Fisch, Reis, Gemüse klein schneiden, in einer heißen Pfanne oder im Wok kurz scharf anbraten und würzen.' },
+  { id: 'fisch36', name: 'Fischklößchen in Soße', type: 'fish', ingredients: ["fish","eggs","breadcrumbs","cream"], steps: 'Fisch, Eier, Semmelbrösel vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'fisch37', name: 'Fisch-Kartoffel-Salat', type: 'fish', ingredients: ["fish","potatoes","oil","vinegar"], steps: 'Fisch, Kartoffeln, Öl klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'fisch38', name: 'Räucherfisch-Salat', type: 'fish', ingredients: ["fish","gherkin","onion"], steps: 'Fisch, Gewürzgurken, Zwiebeln klein schneiden bzw. vorbereiten, vermengen und mit einem Dressing aus Öl und Essig (oder Zitrone) abschmecken.' },
+  { id: 'fisch39', name: 'Fischsuppe Bouillabaisse-Art', type: 'fish', ingredients: ["fish","tomato","vegetables"], steps: 'Zwiebeln (falls vorhanden) andünsten, Fisch, Tomaten zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'fisch40', name: 'Fisch mit Kapernbutter', type: 'fish', ingredients: ["fish","capers","butter"], steps: 'Fisch, Kapern, Butter vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'fisch41', name: 'Fischfilet mit Tomatensoße', type: 'fish', ingredients: ["fish","tomato","onion"], steps: 'Fisch, Tomaten, Zwiebeln vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'fisch42', name: 'Fisch mit Kürbisgemüse', type: 'fish', ingredients: ["fish","pumpkin","cream"], steps: 'Fisch, Kürbis, Sahne vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'fisch43', name: 'Fisch mit Rahmspinat', type: 'fish', ingredients: ["fish","spinach","cream"], steps: 'Fisch, Spinat, Sahne vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'fisch44', name: 'Fisch mit Bratkartoffeln', type: 'fish', ingredients: ["fish","potatoes","onion"], steps: 'Fisch, Kartoffeln, Zwiebeln vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'fisch45', name: 'Fisch-Curry mit Gemüse', type: 'fish', ingredients: ["fish","vegetables","curry","coconutmilk"], steps: 'Zwiebeln andünsten, Fisch zugeben, mit Currypulver würzen, mit Kokosmilch ablöschen und 15–20 Minuten köcheln lassen.' },
+  { id: 'fisch46', name: 'Fischpfanne mit Paprika', type: 'fish', ingredients: ["fish","bellpepper","onion"], steps: 'Fisch, Paprika (frisch), Zwiebeln klein schneiden, in einer heißen Pfanne oder im Wok kurz scharf anbraten und würzen.' },
+  { id: 'fisch47', name: 'Fisch mit Zucchini', type: 'fish', ingredients: ["fish","zucchini","butter"], steps: 'Fisch, Zucchini, Butter vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'fisch48', name: 'Fisch mit Blumenkohl', type: 'fish', ingredients: ["fish","cauliflower","butter"], steps: 'Fisch, Blumenkohl, Butter vorbereiten, gemeinsam anbraten bzw. köcheln lassen, würzen und heiß servieren.' },
+  { id: 'fisch49', name: 'Fischsuppe mit Lauch', type: 'fish', ingredients: ["fish","leek","cream"], steps: 'Zwiebeln (falls vorhanden) andünsten, Fisch, Lauch zugeben, mit Brühe oder Wasser aufgießen und 20–30 Minuten köcheln lassen, bis alles gar ist.' },
+  { id: 'fisch50', name: 'Fischgratin mit Lauch und Käse', type: 'fish', ingredients: ["fish","leek","cheese","cream"], steps: 'Fisch, Lauch schichten bzw. vorbereiten, mit Sahne übergießen und bei 180°C ca. 25–30 Minuten überbacken.' },
 ];
 
 // -- State --
@@ -1046,6 +1508,7 @@ function renderDetail(p) {
     ${p.free_harvest ? '<div>✅ Kostenlos</div>' : ''}
     ${p.honesty_box ? '<div>💶 Kasse/Automat vorhanden</div>' : ''}
     ${productsHtml}
+    <button id="basketToggleBtn" style="margin-top:12px; width:100%; padding:10px; background:${isInBasket(p.id) ? '#3a5a40' : '#eee'}; color:${isInBasket(p.id) ? 'white' : '#222'}; border:none; border-radius:8px; cursor:pointer; font-weight:600;">${isInBasket(p.id) ? '🧺 Im Einkaufskorb ✓' : '🧺 In den Einkaufskorb'}</button>
     ${p.orderable ? `<button id="orderBtn" style="margin-top:12px; width:100%; padding:10px; background:#3a5a40; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600;">🛒 Bestellanfrage senden</button>` : ''}
 
     <div style="margin-top:16px;">
@@ -1107,6 +1570,8 @@ function renderDetail(p) {
     await fetch(`${API}?action=comment_add`, { method: 'POST', body: JSON.stringify({ place_id: p.id, author, text }) });
     await refreshDetail(p.id);
   };
+
+  document.getElementById('basketToggleBtn').onclick = () => { toggleBasket(p); renderDetail(p); };
 
   const orderBtn = document.getElementById('orderBtn');
   if (orderBtn) orderBtn.onclick = () => openOrderModal(p);
@@ -1182,8 +1647,15 @@ document.getElementById('orderSend').onclick = async () => {
 };
 
 // -- Rezept-Planer --
+const RECIPE_TYPES = {
+  meat:       { label: 'Fleisch',      icon: '🥩' },
+  vegetarian: { label: 'Vegetarisch',  icon: '🥕' },
+  vegan:      { label: 'Vegan',        icon: '🌱' },
+  sweet:      { label: 'Süß',          icon: '🍰' },
+  fish:       { label: 'Fisch',        icon: '🐟' },
+};
 let recipeTolerance = 2;
-let recipeTypeFilter = new Set(['sweet', 'savory']);
+let recipeTypeFilter = new Set(Object.keys(RECIPE_TYPES));
 let activeRecipe = null;
 let recipeSelectedIngredients = new Set();
 
@@ -1234,15 +1706,16 @@ function renderRecipeList() {
       ${[0, 1, 2, 3].map(n => `<option value="${n}" ${n === recipeTolerance ? 'selected' : ''}>${n}</option>`).join('')}
     </select>
 
-    <div style="display:flex; gap:6px; margin-top:12px;">
-      <div class="chip ${recipeTypeFilter.has('sweet') ? 'active' : ''}" id="r_filter_sweet">🍰 Kuchen</div>
-      <div class="chip ${recipeTypeFilter.has('savory') ? 'active' : ''}" id="r_filter_savory">🍲 Herzhaft</div>
+    <div style="display:flex; gap:6px; margin-top:12px; flex-wrap:wrap;">
+      ${Object.entries(RECIPE_TYPES).map(([key, t]) => `
+        <div class="chip ${recipeTypeFilter.has(key) ? 'active' : ''}" data-type="${key}">${t.icon} ${t.label}</div>
+      `).join('')}
     </div>
 
     <div id="recipeList" style="margin-top:8px;">
       ${rows.length ? rows.map(({ r, missing }) => `
         <div class="recipe-row" data-id="${r.id}">
-          <span class="rname">${r.type === 'sweet' ? '🍰' : '🍲'} ${escapeHtml(r.name)}</span>
+          <span class="rname">${(RECIPE_TYPES[r.type] || {}).icon || '🍲'} ${escapeHtml(r.name)}</span>
           <span class="hint">${missing === 0 ? 'alles in der Nähe' : missing + ' zum Dazukaufen'}</span>
         </div>`).join('') : '<div class="hint" style="padding:12px 0;">Keine Rezepte bei dieser Toleranz – Toleranz erhöhen oder mehr Orte eintragen.</div>'}
     </div>
@@ -1254,8 +1727,9 @@ function renderRecipeList() {
 
   document.getElementById('recipeClose').onclick = () => recipeModal.classList.remove('open');
   document.getElementById('r_tolerance').onchange = (e) => { recipeTolerance = parseInt(e.target.value, 10); renderRecipeList(); };
-  document.getElementById('r_filter_sweet').onclick = () => { toggleRecipeFilter('sweet'); };
-  document.getElementById('r_filter_savory').onclick = () => { toggleRecipeFilter('savory'); };
+  document.querySelectorAll('[data-type]').forEach(chip => {
+    chip.onclick = () => toggleRecipeFilter(chip.dataset.type);
+  });
   document.querySelectorAll('.recipe-row').forEach(row => {
     row.onclick = () => openRecipeDetail(RECIPES.find(r => r.id === row.dataset.id));
   });
@@ -1273,7 +1747,7 @@ function openRecipeDetail(recipe) {
   recipeSelectedIngredients = new Set(matches.filter(m => m.found).map(m => m.id));
 
   document.getElementById('recipeContent').innerHTML = `
-    <h2>${recipe.type === 'sweet' ? '🍰' : '🍲'} ${escapeHtml(recipe.name)}</h2>
+    <h2>${(RECIPE_TYPES[recipe.type] || {}).icon || '🍲'} ${escapeHtml(recipe.name)}</h2>
     <div id="ingredientList">
       ${matches.map(m => `
         <div class="ingredient-row">
@@ -1286,6 +1760,7 @@ function openRecipeDetail(recipe) {
           </span>
         </div>`).join('')}
     </div>
+    ${recipe.steps ? `<div style="margin-top:16px;"><strong>Zubereitung</strong><p style="white-space:pre-wrap;">${escapeHtml(recipe.steps)}</p></div>` : ''}
     <div class="modal-actions">
       <button class="btn-cancel" id="recipeBack">Zurück</button>
       <button class="btn-save" id="recipeRoute">🗺️ Route öffnen</button>
@@ -1313,9 +1788,12 @@ function openRecipeRoute(matches) {
     });
 
   if (!stops.length) { alert('Keine Zutaten ausgewählt, die in der Nähe verfügbar sind.'); return; }
+  openMapsRoute(stops);
+}
 
-  // Kein "origin" mitgeben: Google Maps startet dann automatisch am aktuellen
-  // Standort des Geräts, egal wo die Karte hier gerade zentriert ist.
+// Kein "origin" mitgeben: Google Maps startet dann automatisch am aktuellen
+// Standort des Geräts, egal wo die Karte hier gerade zentriert ist.
+function openMapsRoute(stops) {
   const destination = stops[stops.length - 1];
   const waypointStops = stops.slice(0, -1).map(p => `${p.lat},${p.lng}`);
 
@@ -1325,6 +1803,72 @@ function openRecipeRoute(matches) {
     url += `&waypoints=${encodeURIComponent('optimize:true|' + waypointStops.join('|'))}`;
   }
   window.open(url, '_blank');
+}
+
+// -- Einkaufskorb --
+function loadBasket() {
+  try { return JSON.parse(localStorage.getItem('gb_basket') || '[]'); } catch { return []; }
+}
+let basket = loadBasket();
+
+function saveBasket() {
+  localStorage.setItem('gb_basket', JSON.stringify(basket));
+  updateBasketCount();
+}
+function updateBasketCount() {
+  document.getElementById('basketCount').textContent = basket.length ? ` (${basket.length})` : '';
+}
+function isInBasket(id) { return basket.some(b => b.id === id); }
+function toggleBasket(p) {
+  if (isInBasket(p.id)) basket = basket.filter(b => b.id !== p.id);
+  else basket.push({ id: p.id, name: p.name, lat: p.lat, lng: p.lng, category: p.category });
+  saveBasket();
+}
+updateBasketCount();
+
+const basketModal = document.getElementById('basketModal');
+function openBasket() {
+  renderBasketList();
+  basketModal.classList.add('open');
+}
+document.getElementById('basketBtn').onclick = openBasket;
+
+function renderBasketList() {
+  const origin = recipeOrigin();
+  const rows = basket
+    .map(b => ({ b, distance: distanceKm(origin, b) }))
+    .sort((a, b) => a.distance - b.distance);
+
+  document.getElementById('basketContent').innerHTML = `
+    <h2>🧺 Einkaufskorb</h2>
+    <p class="hint">Orte, die du besuchen willst – lass dir eine gemeinsame Route dazu erstellen.</p>
+    <div id="basketList" style="margin-top:8px;">
+      ${rows.length ? rows.map(({ b, distance }) => `
+        <div class="recipe-row" data-id="${b.id}">
+          <span class="rname">${(CATS[b.category] || CATS.other).icon} ${escapeHtml(b.name)}</span>
+          <span class="hint">${distance.toFixed(1)} km &nbsp;<a href="#" class="basket-remove" data-id="${b.id}" style="color:#c1443c;">entfernen</a></span>
+        </div>`).join('') : '<div class="hint" style="padding:12px 0;">Noch keine Orte im Einkaufskorb. Öffne einen Ort auf der Karte und tippe „In den Einkaufskorb“.</div>'}
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="basketClose">Schließen</button>
+      ${rows.length ? '<button class="btn-save" id="basketRoute">🗺️ Route öffnen</button>' : ''}
+    </div>
+    ${rows.length ? '<button id="basketClearBtn" style="margin-top:10px; width:100%; padding:8px; background:#eee; border:none; border-radius:8px; cursor:pointer;">Korb leeren</button>' : ''}
+  `;
+
+  document.getElementById('basketClose').onclick = () => basketModal.classList.remove('open');
+  document.querySelectorAll('.basket-remove').forEach(link => {
+    link.onclick = (e) => {
+      e.preventDefault();
+      basket = basket.filter(b => b.id !== link.dataset.id);
+      saveBasket();
+      renderBasketList();
+    };
+  });
+  const routeBtn = document.getElementById('basketRoute');
+  if (routeBtn) routeBtn.onclick = () => openMapsRoute(rows.map(r => r.b));
+  const clearBtn = document.getElementById('basketClearBtn');
+  if (clearBtn) clearBtn.onclick = () => { basket = []; saveBasket(); renderBasketList(); };
 }
 
 // -- Funktionswunsch --
