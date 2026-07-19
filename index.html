@@ -360,7 +360,8 @@ const SUBCATS = {
   ],
   farmshop: [
     ['eggs', 'Eier'], ['milk', 'Milch'], ['yogurt', 'Joghurt'], ['cheese', 'Käse'], ['butter', 'Butter'],
-    ['cream', 'Sahne'], ['quark', 'Quark'], ['icecream', 'Eis'], ['honey', 'Honig'], ['meat', 'Wurst & Fleisch'],
+    ['cream', 'Sahne'], ['quark', 'Quark'], ['icecream', 'Eis'], ['honey', 'Honig'],
+    ['beef', 'Rind'], ['pork', 'Schwein'], ['lamb', 'Lamm'], ['game', 'Wild'], ['poultry', 'Geflügel'], ['meat', 'Wurst & Fleisch (allgemein)'],
     ['jam', 'Marmelade'], ['juice', 'Saft'], ['vegetables', 'Kartoffeln & Gemüse'], ['other', 'Sonstiges'],
   ],
   market: [
@@ -417,7 +418,10 @@ const INGREDIENTS = {
   vegetables: { label: 'Gemüse', sources: [src('farmshop', 'vegetables'), src('market', 'vegetables')] },
   potatoes: { label: 'Kartoffeln', sources: [src('farmshop', 'vegetables'), src('market', 'vegetables')] },
   mushrooms: { label: 'Pilze', sources: [src('mushroom')] },
-  meat: { label: 'Wurst & Fleisch', sources: [src('farmshop', 'meat'), src('market', 'meat')] },
+  meat: { label: 'Wurst & Fleisch', sources: [
+    src('farmshop', 'meat'), src('farmshop', 'beef'), src('farmshop', 'pork'), src('farmshop', 'lamb'), src('farmshop', 'game'), src('farmshop', 'poultry'),
+    src('market', 'meat'),
+  ] },
   fruit_general: { label: 'Obst', sources: [src('market', 'fruit')] },
   jam: { label: 'Marmelade', sources: [src('farmshop', 'jam'), src('market', 'jam')] },
   // Zutaten ohne Quelle in der App – zählen immer als "Supermarkt"
