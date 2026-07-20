@@ -5,7 +5,7 @@ header('Content-Type: application/json; charset=utf-8');
 
 const CATEGORIES = [
     'fruittrees', 'nuts', 'herbs', 'berries', 'mushroom', 'flowerfield',
-    'eggs', 'honey', 'fish', 'meat', 'farmshop', 'market',
+    'eggs', 'honey', 'fish', 'meat', 'drinks', 'farmshop', 'market',
     'homerestaurant', 'other',
 ];
 
@@ -22,6 +22,7 @@ const SUBCATEGORIES = [
     'honey' => ['blossom', 'forest', 'acacia', 'linden', 'other'],
     'fish' => ['trout', 'carp', 'smoked', 'other'],
     'meat' => ['beef', 'pork', 'lamb', 'game', 'poultry', 'other'],
+    'drinks' => ['juice', 'spirits', 'wine', 'beer', 'other'],
     'homerestaurant' => ['international', 'italian', 'asian', 'german', 'vegetarian', 'other'],
 ];
 

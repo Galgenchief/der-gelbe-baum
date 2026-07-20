@@ -31,7 +31,7 @@
   html, body { background: var(--green); }
   header {
     display: flex; align-items: center; justify-content: space-between;
-    padding: calc(10px + env(safe-area-inset-top)) 16px 10px; background: var(--green); color: white; gap: 10px; flex-wrap: wrap;
+    padding: calc(20px + env(safe-area-inset-top)) 16px 10px; background: var(--green); color: white; gap: 10px; flex-wrap: wrap;
   }
   header h1 { font-size: 18px; margin: 0; display: flex; align-items: center; gap: 8px; }
   header button.primary {
@@ -46,9 +46,13 @@
     width: 340px; min-width: 340px; background: white; border-right: 1px solid var(--border);
     display: flex; flex-direction: column; overflow: hidden;
   }
-  #searchBox { padding: 10px; border-bottom: 1px solid var(--border); }
+  #searchBox { padding: 10px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; }
   #searchBox input {
-    width: 100%; padding: 9px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 14px;
+    flex: 1; width: 100%; padding: 9px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 14px;
+  }
+  #sidebarCloseBtn {
+    display: none; flex-shrink: 0; width: 38px; border: 1px solid var(--border); border-radius: var(--radius);
+    background: white; font-size: 16px; cursor: pointer;
   }
   #filters { padding: 8px 10px; border-bottom: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 6px; }
   .chip {
@@ -170,16 +174,18 @@
   .map-pin span { transform: rotate(45deg); font-size: 15px; }
 
   #placementBanner {
-    display: none; position: fixed; top: calc(64px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
+    display: none; position: fixed; top: calc(var(--header-h, 64px) + 8px); left: 50%; transform: translateX(-50%);
     background: var(--green); color: white; padding: 8px 16px; border-radius: 999px; z-index: 900; font-size: 13px;
   }
   #placementBanner.open { display: block; }
 
   @media (max-width: 760px) {
-    #sidebar { position: fixed; inset: 56px 0 0 0; width: 100%; min-width: 0; z-index: 500; transform: translateX(-100%); transition: transform .2s; }
+    #sidebar { position: fixed; top: var(--header-h, 56px); right: 0; bottom: 0; left: 0; width: 100%; min-width: 0; z-index: 500; transform: translateX(-100%); transition: transform .2s; }
+    .leaflet-top.leaflet-left { z-index: 400; }
     #sidebar.open { transform: translateX(0); }
     #layout { position: relative; }
     #toggleSidebarBtn { display: inline-block !important; }
+    #sidebarCloseBtn { display: block; }
     #headerActions { width: 100%; gap: 6px; }
     #headerActions button.primary {
       flex: 1; min-width: 0; white-space: normal; text-align: center; line-height: 1.2;
@@ -216,7 +222,10 @@
 
 <div id="layout">
   <div id="sidebar">
-    <div id="searchBox"><input type="text" id="searchInput" placeholder="Suchen (Name, Beschreibung)…"></div>
+    <div id="searchBox">
+      <input type="text" id="searchInput" placeholder="Suchen (Name, Beschreibung)…">
+      <button id="sidebarCloseBtn" title="Menü schließen">✕</button>
+    </div>
     <div id="accessToggle">
       <div class="chip active" data-access="all">Alle</div>
       <div class="chip" data-access="public">🌍 Öffentlich</div>
@@ -387,6 +396,7 @@ const CATS = {
   honey:          { label: 'Honig',                         icon: '🍯', color: '#d99a00' },
   fish:           { label: 'Fisch',                         icon: '🐟', color: '#3d7ea6' },
   meat:           { label: 'Fleisch',                       icon: '🥩', color: '#a13d3d' },
+  drinks:         { label: 'Getränke',                      icon: '🥤', color: '#5a8f7b' },
   farmshop:       { label: 'Hofladen',                      icon: '🏚️', color: '#9c6b30' },
   market:         { label: 'Marktstand (regelmäßig)',       icon: '🧺', color: '#2a9d8f' },
   homerestaurant: { label: 'Home Restaurant',                icon: '🍽️', color: '#c1443c' },
@@ -442,6 +452,9 @@ const SUBCATS = {
   ],
   meat: [
     ['beef', 'Rind'], ['pork', 'Schwein'], ['lamb', 'Lamm'], ['game', 'Wild'], ['poultry', 'Geflügel'], ['other', 'Sonstiges'],
+  ],
+  drinks: [
+    ['juice', 'Säfte'], ['spirits', 'Spirituosen'], ['wine', 'Weine'], ['beer', 'Biere'], ['other', 'Sonstiges'],
   ],
   homerestaurant: [
     ['international', 'International'], ['italian', 'Italienisch'], ['asian', 'Asiatisch'],
@@ -1322,13 +1335,22 @@ function reportAtMyLocation() {
 }
 document.getElementById('locateAndAddBtn').onclick = reportAtMyLocation;
 
+// -- Header-Höhe als CSS-Variable, damit Sidebar/Banner sich immer korrekt darunter einordnen
+// (Header wird bei Mobil-Buttons ggf. 2-zeilig, feste Pixelwerte wären fragil)
+function updateHeaderHeightVar() {
+  document.documentElement.style.setProperty('--header-h', document.querySelector('header').offsetHeight + 'px');
+}
+updateHeaderHeightVar();
+window.addEventListener('resize', updateHeaderHeightVar);
+
 // -- Sidebar-Toggle mobil --
+const sidebar = document.getElementById('sidebar');
 document.getElementById('toggleSidebarBtn').onclick = (e) => {
   e.stopPropagation();
-  document.getElementById('sidebar').classList.toggle('open');
+  sidebar.classList.toggle('open');
 };
+document.getElementById('sidebarCloseBtn').onclick = () => sidebar.classList.remove('open');
 document.addEventListener('click', (e) => {
-  const sidebar = document.getElementById('sidebar');
   if (!sidebar.classList.contains('open')) return;
   if (sidebar.contains(e.target) || e.target.id === 'toggleSidebarBtn') return;
   sidebar.classList.remove('open');
