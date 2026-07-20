@@ -38,14 +38,15 @@ Domain `dergelbebaum.de` kommt, sobald verfügbar).
 ## Fertig / implementiert
 
 **Karte & Einträge**
-- Interaktive Karte, Platzierungsmodus ("Bodenschatz melden"), 15 Kategorien
+- Interaktive Karte, Platzierungsmodus ("Bodenschatz melden"), 16 Kategorien
   (Obstbäume, Nüsse, Wildkräuter, Beerensträucher, Pilzfund, Blumenfeld, Eier, Honig,
-  Fisch, Fleisch, Hofladen, Marktstand, Home Restaurant, Sonstiges – "Milch" wurde als
-  eigene Kategorie wieder entfernt, da bei Hofladen/Marktstand als Unterkategorie
+  Fisch, Fleisch, Getränke, Hofladen, Marktstand, Home Restaurant, Sonstiges – "Milch" wurde
+  als eigene Kategorie wieder entfernt, da bei Hofladen/Marktstand als Unterkategorie
   abgedeckt). "Fleisch" mit Unterkategorien Rind/Schwein/Lamm/Wild/Geflügel/Sonstiges,
-  "Fisch" mit Forelle/Karpfen/Räucherfisch/Sonstiger Fisch – eigenständige Kategorien
-  zusätzlich zu den bestehenden Fleisch-Unterkategorien bei Hofladen/Marktstand (für
-  spezialisierte Anbieter, die primär Fleisch oder Fisch verkaufen)
+  "Fisch" mit Forelle/Karpfen/Räucherfisch/Sonstiger Fisch, "Getränke" mit Säfte/
+  Spirituosen/Weine/Biere/Sonstiges – eigenständige Kategorien zusätzlich zu den
+  bestehenden Fleisch-Unterkategorien bei Hofladen/Marktstand (für spezialisierte
+  Anbieter, die primär Fleisch, Fisch oder Getränke verkaufen)
 - Mehrfachauswahl bei Unterkategorien (z. B. ein Hofladen kann gleichzeitig Milch, Eier
   und Honig anbieten). Bei Hofladen inzwischen auch spezifische Fleisch-Unterkategorien
   (Rind, Schwein, Lamm, Wild, Geflügel, plus generisches "Wurst & Fleisch" als Fallback)
@@ -101,15 +102,26 @@ Domain `dergelbebaum.de` kommt, sobald verfügbar).
   weist auf Testphase hin
 - Ein Feedback-Button ("Was fehlt dir?") – separate "Feedback"-Button wieder entfernt
 - App-Icon (gelber Baum auf grünem Hintergrund) fürs Homescreen, Safe-Area-Fix für die Notch
-- Menü (mobile Sidebar) schließt jetzt auch bei Klick außerhalb
+- Menü (mobile Sidebar) schließt jetzt auch bei Klick außerhalb, zusätzlich expliziter
+  ✕-Button neben der Suche (mobil), da das reine Toggle-Verhalten am Handy zeitweise durch
+  eine falsch mitgewachsene Sidebar-Positionierung blockiert war (behoben: Header-Höhe wird
+  jetzt per JS gemessen und als CSS-Variable `--header-h` an Sidebar/Banner weitergegeben,
+  statt fest codierter Pixelwerte, die bei Header-Änderungen leicht veralten)
+- Rezept-Planer, Einkaufskorb und Rangliste haben zusätzlich zum Schließen-Button unten auch
+  ein ✕ oben rechts im Modal (langes Scrollen bei vielen Ergebnissen war sonst nötig)
+- Leaflet-Zoom-Buttons liegen am Handy jetzt unter (nicht über) der geöffneten Sidebar
 
 **Datenbestand**
-Insgesamt **~250 reale Direktvermarkter/Wochenmärkte** importiert (drei Massen-Importe aus
-selbst besorgten PDF-Verzeichnissen/Listen, jeweils per OpenStreetMap/Nominatim geokodiert
+Insgesamt **~274 reale Direktvermarkter/Wochenmärkte** importiert (vier Massen-Importe aus
+selbst besorgten PDF-/Excel-Verzeichnissen, jeweils per OpenStreetMap/Nominatim geokodiert
 und gegen Dubletten geprüft):
 1. Landkreis Weißenburg-Gunzenhausen (~150 Orte)
 2. Landkreis Fürth / Stadt Fürth / Stadt Nürnberg (Knoblauchsland) / Nürnberger Land (73 Orte)
 3. Nachträge Weißenburg / Heideck / Eichstätt (21 Orte)
+4. Region Thalmässing/Hilpoltstein/Greding (Landkreis Roth, "Erzeuger um Stauf") – 24 Orte,
+   aus vom Nutzer bereitgestellter Excel-Liste. Bewusst **ohne** Telefon/E-Mail (Nutzer-
+   Entscheidung, konsistent mit den vorherigen Importen). Ein Eintrag ("Brothof Strauß")
+   war bereits vorhanden (Dublette anhand Adresse/Telefon erkannt) und wurde übersprungen
 
 ## Wichtige Entscheidungen
 
