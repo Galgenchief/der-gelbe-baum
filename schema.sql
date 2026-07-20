@@ -77,3 +77,12 @@ CREATE TABLE IF NOT EXISTS players (
   display_name VARCHAR(30) NOT NULL DEFAULT 'Anonym',
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Einfacher IP-basierter Spamschutz (25 Schreibaktionen/Stunde) für Ort melden,
+-- Kommentar, Bewertung, Bestellanfrage
+CREATE TABLE IF NOT EXISTS rate_limits (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  ip_address VARCHAR(45) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE INDEX idx_rate_limits_ip_time ON rate_limits (ip_address, created_at);

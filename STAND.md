@@ -121,12 +121,22 @@ Domain `dergelbebaum.de` kommt, sobald verfügbar).
   außen nicht erreichbar, zusätzlich zu `.gitignore`)
 - Geschützt über `BACKUP_KEY` in `config.php` (Query-Parameter `?key=...`), nicht über ein
   Admin-Login – bewusst kein Accounts-System für eine einzelne Backup-Funktion
-- Muss per **Strato-Cronjob** ausgelöst werden (im Kundenmenü einrichten, URL mit Key),
-  noch nicht automatisch aktiv – siehe "Offen" unten
+- Automatischer Aufruf läuft über einen Claude-Scheduled-Task, nicht Strato-Cron –
+  Details siehe "Offen" unten
 - **Admin-Funktion (Änderungshistorie + Rückgängig-machen)** wurde im Gespräch bewusst
   für die Testphase zurückgestellt, ebenso eine spätere Idee "Nutzer verdienen Punkte fürs
   Prüfen fremder Einträge, oder nur der Ersteller kann Änderungen freigeben" – beides erst
   relevant, wenn die App über den engen Nutzerkreis hinausgeht
+
+**Spamschutz** (neu)
+- Vorher gab es **kein Rate-Limit**, keine Bremse gegen automatisierte Massen-Einträge
+- Einfaches IP-basiertes Limit: max. 25 Schreibaktionen/Stunde für Ort melden, Kommentar,
+  Bewertung, Bestellanfrage (neue Tabelle `rate_limits`, alte Einträge laufen automatisch
+  nach einer Stunde ab). Bei Überschreitung klare Fehlermeldung statt stillem Fehlschlag
+- Dabei behoben: Bewertung und Kommentar zeigten bisher **gar keine** Fehlermeldung an,
+  falls die Anfrage fehlschlug (Frontend prüfte die Server-Antwort nicht) – jetzt wie beim
+  Rest der App über `alert('Fehler: ...')`
+- Bewusst **kein Captcha** – höhere Hürde für echte Nutzer, für die Testphase unnötig
 
 **Datenbestand**
 Insgesamt **~274 reale Direktvermarkter/Wochenmärkte** importiert (vier Massen-Importe aus

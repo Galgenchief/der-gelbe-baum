@@ -64,6 +64,21 @@ function validPlayerId(string $id): ?string {
     return preg_match('/^[0-9a-f-]{36}$/i', $id) ? $id : null;
 }
 
+const RATE_LIMIT_MAX = 25;
+
+function checkRateLimit(): void {
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    db()->prepare('DELETE FROM rate_limits WHERE created_at < DATE_SUB(NOW(), INTERVAL 1 HOUR)')->execute();
+
+    $stmt = db()->prepare('SELECT COUNT(*) FROM rate_limits WHERE ip_address = ?');
+    $stmt->execute([$ip]);
+    if ((int)$stmt->fetchColumn() >= RATE_LIMIT_MAX) {
+        fail('Limit erreicht: maximal ' . RATE_LIMIT_MAX . ' Meldungen/Kommentare/Bewertungen pro Stunde. Bitte später erneut versuchen.', 429);
+    }
+
+    db()->prepare('INSERT INTO rate_limits (ip_address) VALUES (?)')->execute([$ip]);
+}
+
 $action = $_GET['action'] ?? '';
 
 switch ($action) {
@@ -118,6 +133,7 @@ switch ($action) {
         break;
 
     case 'create':
+        checkRateLimit();
         $in = jsonInput();
         $name = trim((string)($in['name'] ?? ''));
         $category = (string)($in['category'] ?? '');
@@ -262,6 +278,7 @@ switch ($action) {
         break;
 
     case 'rate':
+        checkRateLimit();
         $in = jsonInput();
         $placeId = (int)($in['place_id'] ?? 0);
         $stars = (int)($in['stars'] ?? 0);
@@ -276,6 +293,7 @@ switch ($action) {
         break;
 
     case 'comment_add':
+        checkRateLimit();
         $in = jsonInput();
         $placeId = (int)($in['place_id'] ?? 0);
         $text = trim((string)($in['text'] ?? ''));
@@ -313,6 +331,7 @@ switch ($action) {
         break;
 
     case 'order_create':
+        checkRateLimit();
         $in = jsonInput();
         $placeId = (int)($in['place_id'] ?? 0);
         $customerName = trim((string)($in['customer_name'] ?? ''));

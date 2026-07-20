@@ -1667,7 +1667,9 @@ function renderDetail(p) {
     const rect = starEl.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const stars = Math.max(1, Math.min(5, Math.ceil(x / (rect.width / 5))));
-    await fetch(`${API}?action=rate`, { method: 'POST', body: JSON.stringify({ place_id: p.id, stars }) });
+    const res = await fetch(`${API}?action=rate`, { method: 'POST', body: JSON.stringify({ place_id: p.id, stars }) });
+    const data = await res.json();
+    if (!res.ok) { alert('Fehler: ' + data.error); return; }
     await refreshDetail(p.id);
     await loadPlaces();
   };
@@ -1676,7 +1678,9 @@ function renderDetail(p) {
     const text = document.getElementById('c_text').value.trim();
     if (!text) return;
     const author = document.getElementById('c_author').value.trim();
-    await fetch(`${API}?action=comment_add`, { method: 'POST', body: JSON.stringify({ place_id: p.id, author, text }) });
+    const res = await fetch(`${API}?action=comment_add`, { method: 'POST', body: JSON.stringify({ place_id: p.id, author, text }) });
+    const data = await res.json();
+    if (!res.ok) { alert('Fehler: ' + data.error); return; }
     await refreshDetail(p.id);
   };
 
