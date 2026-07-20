@@ -164,8 +164,12 @@ und gegen Dubletten geprüft):
 
 ## Offen / mögliche nächste Schritte
 
-- **Strato-Cronjob für `backup.php` einrichten** – Code ist fertig und deployed, aber der
-  automatische Aufruf (z. B. wöchentlich) muss noch im Strato-Kundenmenü aktiviert werden
+- **Backup-Automatisierung**: läuft nicht über Strato-Cron, sondern über einen Claude-
+  Scheduled-Task (`gelbebaum-db-backup`, 1. und 15. jedes Monats, 9 Uhr), der die
+  `backup.php`-URL aufruft. **Achtung:** läuft nur, während die Claude-App offen/aktiv ist
+  (holt Verpasstes beim nächsten Öffnen nach) – kein serverseitiger Cronjob. Falls das mal
+  zuverlässiger sein soll: echter Strato-Cronjob wäre die Alternative (Code ist dafür bereits
+  fertig, `backup.php` braucht nur eine URL, die regelmäßig aufgerufen wird)
 - **Moderationsfunktion / Änderungshistorie**: bewusst für die Testphase zurückgestellt,
   bei mehr Nutzern wieder aufgreifen (Admin-Login übers bestehende Token-Prinzip, kein
   Accounts-System). Später denkbar: Nutzer verdienen Punkte fürs Prüfen fremder Einträge,
