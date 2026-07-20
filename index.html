@@ -84,9 +84,15 @@
   .modal-overlay.open { display: flex; }
   .modal {
     background: white; border-radius: var(--radius); max-width: 480px; width: 100%;
-    max-height: 90vh; overflow-y: auto; padding: 20px;
+    max-height: 90vh; overflow-y: auto; padding: 20px; position: relative;
   }
   .modal h2 { margin-top: 0; font-size: 18px; }
+  .modal-close-x {
+    position: absolute; top: 14px; right: 14px; width: 30px; height: 30px;
+    border: none; border-radius: 50%; background: #eee; color: #2b2b26;
+    font-size: 16px; line-height: 1; cursor: pointer; z-index: 5;
+  }
+  .modal-close-x:active { background: #ddd; }
   .modal label { display: block; font-size: 13px; font-weight: 600; margin: 12px 0 4px; }
   .modal input[type=text], .modal input[type=email], .modal input[type=tel],
   .modal select, .modal textarea {
@@ -330,17 +336,26 @@
 
 <!-- Rezept-Planer -->
 <div class="modal-overlay" id="recipeModal">
-  <div class="modal" id="recipeContent" style="max-width:560px;"></div>
+  <div class="modal" style="max-width:560px;">
+    <button class="modal-close-x" id="recipeCloseX" title="Schließen">✕</button>
+    <div id="recipeContent"></div>
+  </div>
 </div>
 
 <!-- Einkaufskorb -->
 <div class="modal-overlay" id="basketModal">
-  <div class="modal" id="basketContent" style="max-width:560px;"></div>
+  <div class="modal" style="max-width:560px;">
+    <button class="modal-close-x" id="basketCloseX" title="Schließen">✕</button>
+    <div id="basketContent"></div>
+  </div>
 </div>
 
 <!-- Rangliste -->
 <div class="modal-overlay" id="rankingModal">
-  <div class="modal" id="rankingContent" style="max-width:560px;"></div>
+  <div class="modal" style="max-width:560px;">
+    <button class="modal-close-x" id="rankingCloseX" title="Schließen">✕</button>
+    <div id="rankingContent"></div>
+  </div>
 </div>
 
 <button id="featureRequestBtn">💡 Was fehlt dir?</button>
@@ -1777,6 +1792,7 @@ function recipeMissingCount(recipe) {
 }
 
 const recipeModal = document.getElementById('recipeModal');
+document.getElementById('recipeCloseX').onclick = () => recipeModal.classList.remove('open');
 
 function openRecipePlanner() {
   renderRecipeList();
@@ -1792,7 +1808,7 @@ function renderRecipeList() {
     .sort((a, b) => a.missing - b.missing || a.r.name.localeCompare(b.r.name));
 
   document.getElementById('recipeContent').innerHTML = `
-    <h2>🍳 Rezept-Planer</h2>
+    <h2 style="padding-right:36px;">🍳 Rezept-Planer</h2>
     <p class="hint">Zeigt Rezepte, bei denen du die meisten Zutaten in der Nähe bekommst – der Rest wird im Supermarkt dazugekauft.</p>
 
     <label>Wie viele Zutaten darfst du zusätzlich im Supermarkt kaufen?</label>
@@ -1841,7 +1857,7 @@ function openRecipeDetail(recipe) {
   recipeSelectedIngredients = new Set(matches.filter(m => m.found).map(m => m.id));
 
   document.getElementById('recipeContent').innerHTML = `
-    <h2>${(RECIPE_TYPES[recipe.type] || {}).icon || '🍲'} ${escapeHtml(recipe.name)}</h2>
+    <h2 style="padding-right:36px;">${(RECIPE_TYPES[recipe.type] || {}).icon || '🍲'} ${escapeHtml(recipe.name)}</h2>
     <div id="ingredientList">
       ${matches.map(m => `
         <div class="ingredient-row">
@@ -1921,6 +1937,7 @@ function toggleBasket(p) {
 updateBasketCount();
 
 const basketModal = document.getElementById('basketModal');
+document.getElementById('basketCloseX').onclick = () => basketModal.classList.remove('open');
 function openBasket() {
   renderBasketList();
   basketModal.classList.add('open');
@@ -1934,7 +1951,7 @@ function renderBasketList() {
     .sort((a, b) => a.distance - b.distance);
 
   document.getElementById('basketContent').innerHTML = `
-    <h2>🧺 Einkaufskorb</h2>
+    <h2 style="padding-right:36px;">🧺 Einkaufskorb</h2>
     <p class="hint">Orte, die du besuchen willst – lass dir eine gemeinsame Route dazu erstellen.</p>
     <div id="basketList" style="margin-top:8px;">
       ${rows.length ? rows.map(({ b, distance }) => `
@@ -2011,9 +2028,10 @@ async function checkNewBadge() {
 
 const rankingModal = document.getElementById('rankingModal');
 document.getElementById('rankingBtn').onclick = openRanking;
+document.getElementById('rankingCloseX').onclick = () => rankingModal.classList.remove('open');
 
 async function openRanking() {
-  document.getElementById('rankingContent').innerHTML = '<h2>🏆 Rangliste</h2><p class="hint">Lädt…</p>';
+  document.getElementById('rankingContent').innerHTML = '<h2 style="padding-right:36px;">🏆 Rangliste</h2><p class="hint">Lädt…</p>';
   rankingModal.classList.add('open');
   const [statsRes, rankingRes] = await Promise.all([
     fetch(`${API}?action=player_stats&player_id=${playerId}`),
@@ -2029,7 +2047,7 @@ function renderRanking(stats, ranking) {
   const upcoming = stats ? nextBadge(stats.submissions) : BADGES[0];
 
   document.getElementById('rankingContent').innerHTML = `
-    <h2>🏆 Rangliste</h2>
+    <h2 style="padding-right:36px;">🏆 Rangliste</h2>
     <div style="background:#f7f2e3; border-radius:8px; padding:12px;">
       <strong>Dein Stand</strong><br>
       ${stats ? `
