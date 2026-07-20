@@ -33,6 +33,7 @@ Domain `dergelbebaum.de` kommt, sobald verfügbar).
 | `config.example.php` | Vorlage für `config.php` |
 | `schema.sql` | Datenbankstruktur (für Neuinstallationen; auf dem Server schon mehrfach per ALTER TABLE erweitert) |
 | `manifest.json`, `icon-*.png`, `apple-touch-icon.png` | App-Icon fürs Homescreen (PWA) |
+| `backup.php` | Automatisches DB-Backup (per Cronjob aufrufen), braucht `BACKUP_KEY` in `config.php` |
 | `README.md` | Kurzanleitung Deployment |
 
 ## Fertig / implementiert
@@ -111,6 +112,22 @@ Domain `dergelbebaum.de` kommt, sobald verfügbar).
   ein ✕ oben rechts im Modal (langes Scrollen bei vielen Ergebnissen war sonst nötig)
 - Leaflet-Zoom-Buttons liegen am Handy jetzt unter (nicht über) der geöffneten Sidebar
 
+**Datenbank-Backup** (neu)
+- Vorher gab es **keinerlei Sicherung** – bewusst identifiziert und behoben
+- `backup.php`: baut den kompletten SQL-Dump selbst über PDO (kein `mysqldump`/`exec()` nötig,
+  läuft daher auch auf restriktivem Shared-Hosting), verschickt ihn als Anhang per Mail an
+  `FEEDBACK_TO` (liegt damit automatisch außerhalb des Servers) und behält zusätzlich die
+  letzten 8 Kopien lokal im Ordner `backups/` (per `.htaccess` mit `Require all denied` von
+  außen nicht erreichbar, zusätzlich zu `.gitignore`)
+- Geschützt über `BACKUP_KEY` in `config.php` (Query-Parameter `?key=...`), nicht über ein
+  Admin-Login – bewusst kein Accounts-System für eine einzelne Backup-Funktion
+- Muss per **Strato-Cronjob** ausgelöst werden (im Kundenmenü einrichten, URL mit Key),
+  noch nicht automatisch aktiv – siehe "Offen" unten
+- **Admin-Funktion (Änderungshistorie + Rückgängig-machen)** wurde im Gespräch bewusst
+  für die Testphase zurückgestellt, ebenso eine spätere Idee "Nutzer verdienen Punkte fürs
+  Prüfen fremder Einträge, oder nur der Ersteller kann Änderungen freigeben" – beides erst
+  relevant, wenn die App über den engen Nutzerkreis hinausgeht
+
 **Datenbestand**
 Insgesamt **~274 reale Direktvermarkter/Wochenmärkte** importiert (vier Massen-Importe aus
 selbst besorgten PDF-/Excel-Verzeichnissen, jeweils per OpenStreetMap/Nominatim geokodiert
@@ -147,6 +164,12 @@ und gegen Dubletten geprüft):
 
 ## Offen / mögliche nächste Schritte
 
+- **Strato-Cronjob für `backup.php` einrichten** – Code ist fertig und deployed, aber der
+  automatische Aufruf (z. B. wöchentlich) muss noch im Strato-Kundenmenü aktiviert werden
+- **Moderationsfunktion / Änderungshistorie**: bewusst für die Testphase zurückgestellt,
+  bei mehr Nutzern wieder aufgreifen (Admin-Login übers bestehende Token-Prinzip, kein
+  Accounts-System). Später denkbar: Nutzer verdienen Punkte fürs Prüfen fremder Einträge,
+  oder nur der ursprüngliche Ersteller kann Änderungen freigeben
 - **Domain-Umzug**: sobald `dergelbebaum.de` verfügbar ist, DNS umstellen
   (aktuell `kartenfaktur.de` als Übergangslösung, alte WordPress-Seite von Kartenfaktur
   liegt noch unberührt auf dem Server, nur die Verzeichniszuordnung der Domain zeigt jetzt

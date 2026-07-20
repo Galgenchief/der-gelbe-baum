@@ -13,3 +13,7 @@ define('MAIL_FROM', 'noreply@deine-domain.de');
 
 // Empfänger-Adresse für Feedback aus der App
 define('FEEDBACK_TO', 'business@winkler-online.com');
+
+// Geheimer Schlüssel für backup.php – nur wer diesen Key in der URL mitschickt
+// (?key=...), kann ein Backup auslösen. Langer Zufallswert, nirgendwo veröffentlichen.
+define('BACKUP_KEY', 'DEIN_ZUFAELLIGER_GEHEIMER_SCHLUESSEL');
