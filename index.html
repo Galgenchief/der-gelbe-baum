@@ -358,6 +358,19 @@
   </div>
 </div>
 
+<!-- Abzeichen freigeschaltet -->
+<div class="modal-overlay" id="badgeUnlockModal">
+  <div class="modal" style="max-width:340px; text-align:center;">
+    <div id="badgeUnlockIcon" style="font-size:64px; line-height:1; margin:8px 0;"></div>
+    <h2 style="margin-top:0;">Neues Abzeichen freigeschaltet!</h2>
+    <p id="badgeUnlockLabel" style="font-size:18px; font-weight:600; margin:4px 0;"></p>
+    <p class="hint" id="badgeUnlockStats"></p>
+    <div class="modal-actions">
+      <button class="btn-save" id="badgeUnlockClose" style="flex:none; margin:0 auto;">Weiter</button>
+    </div>
+  </div>
+</div>
+
 <button id="featureRequestBtn">💡 Was fehlt dir?</button>
 <div id="addMenu" class="add-menu">
   <button id="addAtLocation">📍 An meinem Standort</button>
@@ -2026,9 +2039,18 @@ async function checkNewBadge() {
     const oldBadge = badgeForCount(lastCount);
     const newBadge = badgeForCount(stats.submissions);
     if (newBadge && newBadge !== oldBadge) {
-      alert(`${newBadge.icon} Neues Abzeichen freigeschaltet: ${newBadge.label}!\n(${stats.submissions} Meldungen, ${stats.points} Punkte)`);
+      showBadgeUnlock(newBadge, stats);
     }
   } catch { /* Rangliste ist ein Bonus-Feature, Fehler hier sollen das Melden nicht stören */ }
+}
+
+const badgeUnlockModal = document.getElementById('badgeUnlockModal');
+document.getElementById('badgeUnlockClose').onclick = () => badgeUnlockModal.classList.remove('open');
+function showBadgeUnlock(badge, stats) {
+  document.getElementById('badgeUnlockIcon').textContent = badge.icon;
+  document.getElementById('badgeUnlockLabel').textContent = badge.label;
+  document.getElementById('badgeUnlockStats').textContent = `${stats.submissions} Meldungen, ${stats.points} Punkte`;
+  badgeUnlockModal.classList.add('open');
 }
 
 const rankingModal = document.getElementById('rankingModal');
