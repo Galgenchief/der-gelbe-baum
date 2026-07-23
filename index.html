@@ -397,6 +397,7 @@
 <!-- Info -->
 <div class="modal-overlay" id="infoModal">
   <div class="modal">
+    <button class="modal-close-x" id="infoCloseX" title="Schließen">✕</button>
     <h2>🌳 Was ist Der Gelbe Baum?</h2>
     <p>Der Gelbe Baum ist eine gemeinschaftliche Karte für alles, was deine Region an Obst, Gemüse, Honig und mehr zu bieten hat – von Streuobstwiesen und Pilzstellen bis zu Hofläden und Marktständen.</p>
     <p>🎗️ <strong>Namensgeber:</strong> Ein Baum mit einem gelben Band ist ausdrücklich für die Allgemeinheit freigegeben – jeder darf sich dort bedienen. Solche Bäume gehören definitiv in diese Karte!</p>
@@ -2156,6 +2157,7 @@ document.getElementById('feedbackSend').onclick = async () => {
 const infoModal = document.getElementById('infoModal');
 document.getElementById('infoBtn').onclick = () => infoModal.classList.add('open');
 document.getElementById('infoClose').onclick = () => infoModal.classList.remove('open');
+document.getElementById('infoCloseX').onclick = () => infoModal.classList.remove('open');
 if (!localStorage.getItem('gb_seen_intro')) {
   infoModal.classList.add('open');
   localStorage.setItem('gb_seen_intro', '1');
